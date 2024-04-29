@@ -232,6 +232,8 @@ shouldDiagnoseAvailabilityByDefault(const ASTContext &Context,
     // FIXME: This will be updated when HLSL strict diagnostic mode
     // is implemented (issue #90096)
     return false;
+    // HEKOTA TODO - HLSL strict diagnostics
+    // return Context.getLangOpts().HLSLStrictDiagnostics;
   default:
     // New targets should always warn about availability.
     return Triple.getVendor() == llvm::Triple::Apple;
