@@ -307,6 +307,8 @@ def err_invalid_vector_long_long_decl_spec : Error <
   "POWER7 or later) to be enabled">;
 def err_invalid_vector_long_double_decl_spec : Error<
   "cannot use 'long double' with '__vector'">;
+def err_invalid_vector_complex_decl_spec : Error<
+  "cannot use '_Complex' with '__vector'">;
 def warn_vector_long_decl_spec_combination : Warning<
   "Use of 'long' with '__vector' is deprecated">, InGroup<Deprecated>;
 
@@ -3862,10 +3864,16 @@ def warn_availability_fuchsia_unavailable_minor : Warning<
   InGroup<Availability>;
 
 def warn_unguarded_availability :
-  Warning<"%0 %select{is only|is not}5 available %select{|in %4 environment }3on %1 %2 %select{or newer|}5">,
+  Warning<"%0 is only available %select{|in %4 environment }3on %1 %2 or newer">,
+  InGroup<UnguardedAvailability>, DefaultIgnore;
+def warn_unguarded_availability_unavailable :
+  Warning<"%0 is unavailable">,
   InGroup<UnguardedAvailability>, DefaultIgnore;
 def warn_unguarded_availability_new :
   Warning<warn_unguarded_availability.Summary>,
+  InGroup<UnguardedAvailabilityNew>;
+def warn_unguarded_availability_unavailable_new :
+  Warning<warn_unguarded_availability_unavailable.Summary>,
   InGroup<UnguardedAvailabilityNew>;
 def note_decl_unguarded_availability_silence : Note<
   "annotate %select{%1|anonymous %1}0 with an availability attribute to silence this warning">;
@@ -5438,6 +5446,11 @@ def note_function_template_spec_matched : Note<
 def err_function_template_partial_spec : Error<
     "function template partial specialization is not allowed">;
 
+def err_function_member_spec_ambiguous : Error<
+    "ambiguous member function specialization %q0 of %q1">;
+def note_function_member_spec_matched : Note<
+    "member function specialization matches %0">;
+
 // C++ Template Instantiation
 def err_template_recursion_depth_exceeded : Error<
   "recursive template instantiation exceeded maximum depth of %0">,
@@ -5859,7 +5872,7 @@ def note_availability_specified_here : Note<
   "%select{unavailable|deleted|deprecated}1 here">;
 def note_partial_availability_specified_here : Note<
   "%0 has been marked as being introduced in %1 %2 %select{|in %5 environment }4here, "
-  "but the deployment target is %1 %3">;
+  "but the deployment target is %1 %3%select{| %6 environment }4">;
 def note_implicitly_deleted : Note<
   "explicitly defaulted function was implicitly deleted here">;
 def warn_not_enough_argument : Warning<
@@ -7512,6 +7525,9 @@ def err_nested_non_static_member_use : Error<
 def warn_cxx98_compat_non_static_member_use : Warning<
   "use of non-static data member %0 in an unevaluated context is "
   "incompatible with C++98">, InGroup<CXX98Compat>, DefaultIgnore;
+def err_form_ptr_to_member_from_parenthesized_expr : Error<
+  "cannot form pointer to member from a parenthesized expression; "
+  "did you mean to remove the parentheses?">;
 def err_invalid_incomplete_type_use : Error<
   "invalid use of incomplete type %0">;
 def err_builtin_func_cast_more_than_one_arg : Error<
@@ -12296,8 +12312,8 @@ def warn_acc_if_self_conflict
               "evaluates to true">,
       InGroup<DiagGroup<"openacc-self-if-potential-conflict">>;
 def err_acc_int_expr_requires_integer
-    : Error<"OpenACC %select{clause|directive}0 '%1' requires expression of "
-            "integer type (%2 invalid)">;
+    : Error<"OpenACC %select{clause '%1'|directive '%2'|sub-array bound}0 "
+            "requires expression of integer type (%3 invalid)">;
 def err_acc_int_expr_incomplete_class_type
     : Error<"OpenACC integer expression has incomplete class type %0">;
 def err_acc_int_expr_explicit_conversion
@@ -12312,4 +12328,34 @@ def err_acc_num_gangs_num_args
             "OpenACC 'num_gangs' "
             "%select{|clause: '%1' directive expects maximum of %2, %3 were "
             "provided}0">;
+def err_acc_not_a_var_ref
+    : Error<"OpenACC variable is not a valid variable name, sub-array, array "
+            "element, or composite variable member">;
+def err_acc_typecheck_subarray_value
+    : Error<"OpenACC sub-array subscripted value is not an array or pointer">;
+def err_acc_subarray_function_type
+    : Error<"OpenACC sub-array cannot be of function type %0">;
+def err_acc_subarray_incomplete_type
+    : Error<"OpenACC sub-array base is of incomplete type %0">;
+def err_acc_subarray_no_length
+    : Error<"OpenACC sub-array length is unspecified and cannot be inferred "
+            "because the subscripted value is %select{not an array|an array of "
+            "unknown bound}0">;
+def err_acc_subarray_negative
+    : Error<"OpenACC sub-array %select{lower bound|length}0 evaluated to "
+            "negative value %1">;
+def err_acc_subarray_out_of_range
+    : Error<"OpenACC sub-array %select{lower bound|length}0 evaluated to a "
+            "value (%1) that would be out of the range of the subscripted "
+            "array size of %2">;
+def err_acc_subarray_base_plus_length_out_of_range
+    : Error<"OpenACC sub-array specified range [%0:%1] would be out of the "
+            "range of the subscripted array size of %2">;
+def warn_acc_deprecated_alias_name
+    : Warning<"OpenACC clause name '%0' is a deprecated clause name and is "
+              "now an alias for '%1'">,
+      InGroup<DiagGroup<"openacc-deprecated-clause-alias">>;
+def err_acc_var_not_pointer_type
+    : Error<"expected pointer in '%0' clause, type is %1">;
+def note_acc_expected_pointer_var : Note<"expected variable of pointer type">;
 } // end of sema component.
