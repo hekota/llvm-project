@@ -21,12 +21,12 @@ float also_alive(float f) {
   // expected-note@#fx {{'fx' has been marked as being introduced in Shader Model 6.5 here, but the deployment target is Shader Model 6.0}}
   float A = fx(f); // #also_alive_fx_call
   
-  // FUTURE-expected-error@#also_alive_fy_call {{'fy' is only available in compute shader environment on Shader Model 6.5 or newer}}
-  // FUTURE-expected-note@#fy {{'fy' has been marked as being introduced in Shader Model 6.5 in compute shader environment here, but the deployment target is Shader Model 6.0 compute shader environment}}
+  // expected-error@#also_alive_fy_call {{'fy' is only available in compute shader environment on Shader Model 6.5 or newer}}
+  // expected-note@#fy {{'fy' has been marked as being introduced in Shader Model 6.5 in compute shader environment here, but the deployment target is Shader Model 6.0 compute shader environment}}
   float B = fy(f); // #also_alive_fy_call
 
-  // FUTURE-expected-error@#also_alive_fz_call {{'fz' is unavailable}}
-  // FUTURE-expected-note@#fz {{'fz' has been marked as being introduced in Shader Model 6.5 in mesh shader environment here, but the deployment target is Shader Model 6.0 compute shader environment}}
+  // expected-error@#also_alive_fz_call {{'fz' is unavailable}}
+  // expected-note@#fz {{'fz' has been marked as being introduced in Shader Model 6.5 in mesh shader environment here, but the deployment target is Shader Model 6.0 compute shader environment}}
   float C = fz(f); // #also_alive_fz_call
 
   return 0;
@@ -37,12 +37,12 @@ float alive(float f) {
   // expected-note@#fx {{'fx' has been marked as being introduced in Shader Model 6.5 here, but the deployment target is Shader Model 6.0}}
   float A = fx(f); // #alive_fx_call
 
-  // FUTURE-expected-error@#alive_fy_call {{'fy' is only available in compute shader environment on Shader Model 6.5 or newer}}
-  // FUTURE-expected-note@#fy {{'fy' has been marked as being introduced in Shader Model 6.5 in compute shader environment here, but the deployment target is Shader Model 6.0 compute shader environment}}
+  // expected-error@#alive_fy_call {{'fy' is only available in compute shader environment on Shader Model 6.5 or newer}}
+  // expected-note@#fy {{'fy' has been marked as being introduced in Shader Model 6.5 in compute shader environment here, but the deployment target is Shader Model 6.0 compute shader environment}}
   float B = fy(f); // #alive_fy_call
 
-  // FUTURE-expected-error@#alive_fz_call {{'fz' is unavailable}}
-  // FUTURE-expected-note@#fz {{'fz' has been marked as being introduced in Shader Model 6.5 in mesh shader environment here, but the deployment target is Shader Model 6.0 compute shader environment}}
+  // expected-error@#alive_fz_call {{'fz' is unavailable}}
+  // expected-note@#fz {{'fz' has been marked as being introduced in Shader Model 6.5 in mesh shader environment here, but the deployment target is Shader Model 6.0 compute shader environment}}
   float C = fz(f); // #alive_fz_call
 
   return also_alive(f);
@@ -85,11 +85,11 @@ T aliveTemp(T f) {
   // expected-note@#aliveTemp_inst {{in instantiation of function template specialization 'aliveTemp<float>' requested here}}
   // expected-note@#fx {{'fx' has been marked as being introduced in Shader Model 6.5 here, but the deployment target is Shader Model 6.0}}
   float A = fx(f); // #aliveTemp_fx_call
-  // FUTURE-expected-error@#aliveTemp_fy_call {{'fy' is only available in compute shader environment on Shader Model 6.5 or newer}}
-  // FUTURE-expected-note@#fy {{'fy' has been marked as being introduced in Shader Model 6.5 in compute shader environment here, but the deployment target is Shader Model 6.0 compute shader environment}}
+  // expected-error@#aliveTemp_fy_call {{'fy' is only available in compute shader environment on Shader Model 6.5 or newer}}
+  // expected-note@#fy {{'fy' has been marked as being introduced in Shader Model 6.5 in compute shader environment here, but the deployment target is Shader Model 6.0 compute shader environment}}
   float B = fy(f); // #aliveTemp_fy_call
-  // FUTURE-expected-error@#aliveTemp_fz_call {{'fz' is unavailable}}
-  // FUTURE-expected-note@#fz {{'fz' has been marked as being introduced in Shader Model 6.5 in mesh shader environment here, but the deployment target is Shader Model 6.0 compute shader environment}}
+  // expected-error@#aliveTemp_fz_call {{'fz' is unavailable}}
+  // expected-note@#fz {{'fz' has been marked as being introduced in Shader Model 6.5 in mesh shader environment here, but the deployment target is Shader Model 6.0 compute shader environment}}
   float C = fz(f); // #aliveTemp_fz_call
   return 0;
 }
@@ -101,11 +101,11 @@ class MyClass
     // expected-error@#MyClass_makeF_fx_call {{'fx' is only available on Shader Model 6.5 or newer}}
     // expected-note@#fx {{'fx' has been marked as being introduced in Shader Model 6.5 here, but the deployment target is Shader Model 6.0}}
     float A = fx(F); // #MyClass_makeF_fx_call
-    // FUTURE-expected-error@#MyClass_makeF_fy_call {{'fy' is only available in compute shader environment on Shader Model 6.5 or newer}}
-    // FUTURE-expected-note@#fy {{'fy' has been marked as being introduced in Shader Model 6.5 in compute shader environment here, but the deployment target is Shader Model 6.0 compute shader environment}}
+    // expected-error@#MyClass_makeF_fy_call {{'fy' is only available in compute shader environment on Shader Model 6.5 or newer}}
+    // expected-note@#fy {{'fy' has been marked as being introduced in Shader Model 6.5 in compute shader environment here, but the deployment target is Shader Model 6.0 compute shader environment}}
     float B = fy(F); // #MyClass_makeF_fy_call
-    // FUTURE-expected-error@#MyClass_makeF_fz_call {{'fz' is unavailable}}
-    // FUTURE-expected-note@#fz {{'fz' has been marked as being introduced in Shader Model 6.5 in mesh shader environment here, but the deployment target is Shader Model 6.0 compute shader environment}}
+    // expected-error@#MyClass_makeF_fz_call {{'fz' is unavailable}}
+    // expected-note@#fz {{'fz' has been marked as being introduced in Shader Model 6.5 in mesh shader environment here, but the deployment target is Shader Model 6.0 compute shader environment}}
     float C = fz(F); // #MyClass_makeF_fz_call
   }
 };
