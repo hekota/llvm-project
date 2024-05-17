@@ -543,10 +543,10 @@ void DiagnoseHLSLAvailability::CheckDeclAvailability(NamedDecl *D,
     // on shader model version and not on specific the shader stage.
 
     // Skip emitting the diagnostics if the diagnostic mode is not set to
-    // strict (-fhlsl-strict-diagnostics) because all relevant diagnostics
+    // strict (-fhlsl-strict-availability) because all relevant diagnostics
     // were already emitted in the DiagnoseUnguardedAvailability scan
     // (SemaAvailability.cpp).
-    if (SemaRef.getLangOpts().HLSLStrictDiagnostics)
+    if (SemaRef.getLangOpts().HLSLStrictAvailability)
       return;
 
     // Do not report shader-stage-independent issues if scanning a function
@@ -604,11 +604,11 @@ void DiagnoseHLSLAvailability::CheckDeclAvailability(NamedDecl *D,
 
 void SemaHLSL::DiagnoseAvailabilityViolations(TranslationUnitDecl *TU) {
   // Skip running the diagnostics scan if the diagnostic mode is
-  // strict (-fhlsl-strict-diagnostics) and the target shader stage is known
+  // strict (-fhlsl-strict-availability) and the target shader stage is known
   // because all relevant diagnostics were already emitted in the
   // DiagnoseUnguardedAvailability scan (SemaAvailability.cpp).
   const TargetInfo &TI = SemaRef.getASTContext().getTargetInfo();
-  if (SemaRef.getLangOpts().HLSLStrictDiagnostics &&
+  if (SemaRef.getLangOpts().HLSLStrictAvailability &&
       TI.getTriple().getEnvironment() != llvm::Triple::EnvironmentType::Library)
     return;
 

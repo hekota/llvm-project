@@ -1,5 +1,5 @@
 // RUN: %clang_cc1 -triple dxil-pc-shadermodel6.0-compute \
-// RUN: -fhlsl-strict-diagnostics -fsyntax-only -verify %s
+// RUN: -fhlsl-strict-availability -fsyntax-only -verify %s
 
 __attribute__((availability(shadermodel, introduced = 6.5)))
 float fx(float);  // #fx

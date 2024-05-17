@@ -136,7 +136,6 @@ ShouldDiagnoseAvailabilityOfDecl(Sema &S, const NamedDecl *D,
   return {Result, D};
 }
 
-
 /// whether we should emit a diagnostic for \c K and \c DeclVersion in
 /// the context of \c Ctx. For example, we should emit an unavailable diagnostic
 /// in a deprecated context, but not the other way around.
@@ -229,7 +228,7 @@ shouldDiagnoseAvailabilityByDefault(const ASTContext &Context,
     ForceAvailabilityFromVersion = VersionTuple(/*Major=*/10, /*Minor=*/13);
     break;
   case llvm::Triple::ShaderModel:
-    return Context.getLangOpts().HLSLStrictDiagnostics;
+    return Context.getLangOpts().HLSLStrictAvailability;
   default:
     // New targets should always warn about availability.
     return Triple.getVendor() == llvm::Triple::Apple;
@@ -345,14 +344,11 @@ createAttributeInsertion(const NamedDecl *D, const SourceManager &SM,
 /// may not be the same as ReferringDecl, i.e. if an EnumDecl is annotated and
 /// we refer to a member EnumConstantDecl, ReferringDecl is the EnumConstantDecl
 /// and OffendingDecl is the EnumDecl.
-static void DoEmitAvailabilityWarning(Sema &S, AvailabilityResult K,
-                                      Decl *Ctx, const NamedDecl *ReferringDecl,
-                                      const NamedDecl *OffendingDecl,
-                                      StringRef Message,
-                                      ArrayRef<SourceLocation> Locs,
-                                      const ObjCInterfaceDecl *UnknownObjCClass,
-                                      const ObjCPropertyDecl *ObjCProperty,
-                                      bool ObjCPropertyAccess) {
+static void DoEmitAvailabilityWarning(
+    Sema &S, AvailabilityResult K, Decl *Ctx, const NamedDecl *ReferringDecl,
+    const NamedDecl *OffendingDecl, StringRef Message,
+    ArrayRef<SourceLocation> Locs, const ObjCInterfaceDecl *UnknownObjCClass,
+    const ObjCPropertyDecl *ObjCProperty, bool ObjCPropertyAccess) {
   // Diagnostics for deprecated or unavailable.
   unsigned diag, diag_message, diag_fwdclass_message;
   unsigned diag_available_here = diag::note_availability_specified_here;
@@ -508,7 +504,8 @@ static void DoEmitAvailabilityWarning(Sema &S, AvailabilityResult K,
         };
 
         switch (AL->getImplicitReason()) {
-        case UnavailableAttr::IR_None: break;
+        case UnavailableAttr::IR_None:
+          break;
 
         case UnavailableAttr::IR_ARCForbiddenType:
           flagARCError();
@@ -555,8 +552,7 @@ static void DoEmitAvailabilityWarning(Sema &S, AvailabilityResult K,
 
     CharSourceRange UseRange;
     if (!Replacement.empty())
-      UseRange =
-          CharSourceRange::getCharRange(Loc, S.getLocForEndOfToken(Loc));
+      UseRange = CharSourceRange::getCharRange(Loc, S.getLocForEndOfToken(Loc));
     if (UseRange.isValid()) {
       if (const auto *MethodDecl = dyn_cast<ObjCMethodDecl>(ReferringDecl)) {
         Selector Sel = MethodDecl->getSelector();
@@ -621,7 +617,7 @@ static void DoEmitAvailabilityWarning(Sema &S, AvailabilityResult K,
   }
 
   S.Diag(NoteLocation, diag_available_here)
-    << OffendingDecl << available_here_select_kind;
+      << OffendingDecl << available_here_select_kind;
 }
 
 void Sema::handleDelayedAvailabilityCheck(DelayedDiagnostic &DD, Decl *Ctx) {
@@ -636,26 +632,22 @@ void Sema::handleDelayedAvailabilityCheck(DelayedDiagnostic &DD, Decl *Ctx) {
       DD.getObjCProperty(), false);
 }
 
-static void EmitAvailabilityWarning(Sema &S, AvailabilityResult AR,
-                                    const NamedDecl *ReferringDecl,
-                                    const NamedDecl *OffendingDecl,
-                                    StringRef Message,
-                                    ArrayRef<SourceLocation> Locs,
-                                    const ObjCInterfaceDecl *UnknownObjCClass,
-                                    const ObjCPropertyDecl *ObjCProperty,
-                                    bool ObjCPropertyAccess) {
+static void EmitAvailabilityWarning(
+    Sema &S, AvailabilityResult AR, const NamedDecl *ReferringDecl,
+    const NamedDecl *OffendingDecl, StringRef Message,
+    ArrayRef<SourceLocation> Locs, const ObjCInterfaceDecl *UnknownObjCClass,
+    const ObjCPropertyDecl *ObjCProperty, bool ObjCPropertyAccess) {
   // Delay if we're currently parsing a declaration.
   if (S.DelayedDiagnostics.shouldDelayDiagnostics()) {
-    S.DelayedDiagnostics.add(
-        DelayedDiagnostic::makeAvailability(
-            AR, Locs, ReferringDecl, OffendingDecl, UnknownObjCClass,
-            ObjCProperty, Message, ObjCPropertyAccess));
+    S.DelayedDiagnostics.add(DelayedDiagnostic::makeAvailability(
+        AR, Locs, ReferringDecl, OffendingDecl, UnknownObjCClass, ObjCProperty,
+        Message, ObjCPropertyAccess));
     return;
   }
 
   Decl *Ctx = cast<Decl>(S.getCurLexicalContext());
-  DoEmitAvailabilityWarning(S, AR, Ctx, ReferringDecl, OffendingDecl,
-                            Message, Locs, UnknownObjCClass, ObjCProperty,
+  DoEmitAvailabilityWarning(S, AR, Ctx, ReferringDecl, OffendingDecl, Message,
+                            Locs, UnknownObjCClass, ObjCProperty,
                             ObjCPropertyAccess);
 }
 
@@ -816,7 +808,7 @@ void DiagnoseUnguardedAvailability::DiagnoseDeclAvailability(
       return;
 
     const AvailabilityAttr *AA =
-      getAttrForPlatform(SemaRef.getASTContext(), OffendingDecl);
+        getAttrForPlatform(SemaRef.getASTContext(), OffendingDecl);
     bool EnvironmentMatchesOrNone =
         hasMatchingEnvironmentOrNone(SemaRef.getASTContext(), AA);
     VersionTuple Introduced = AA->getIntroduced();
@@ -834,12 +826,12 @@ void DiagnoseUnguardedAvailability::DiagnoseDeclAvailability(
     const TargetInfo &TI = SemaRef.getASTContext().getTargetInfo();
 
     // In HLSL, emit diagnostic here during parsing only if the diagnostic
-    // mode is set to strict (-fhlsl-strict-diagnostics), and either the decl
+    // mode is set to strict (-fhlsl-strict-availability), and either the decl
     // availability is not restricted to a specific environment/shader stage,
     // or the target stage is known (= it is not shader library).
     const LangOptions &LandOpts = SemaRef.getLangOpts();
     if (LandOpts.HLSL) {
-      if (!LandOpts.HLSLStrictDiagnostics ||
+      if (!LandOpts.HLSLStrictAvailability ||
           (AA->getEnvironment() != nullptr &&
            TI.getTriple().getEnvironment() ==
                llvm::Triple::EnvironmentType::Library))
@@ -861,7 +853,7 @@ void DiagnoseUnguardedAvailability::DiagnoseDeclAvailability(
     if (SemaRef.getLangOpts().HLSL) {
       // For HLSL, use diagnostic from HLSLAvailability group which
       // are reported as errors in default and in strict diagnostic mode
-      // (-fhlsl-strict-diagnostics) and as warnings in relaxed diagnostic
+      // (-fhlsl-strict-availability) and as warnings in relaxed diagnostic
       // mode (-Wno-error=hlsl-availability)
       DiagKind = EnvironmentMatchesOrNone
                      ? diag::warn_hlsl_availability
@@ -946,8 +938,9 @@ void DiagnoseUnguardedAvailability::DiagnoseDeclAvailability(
     const char *ExtraIndentation = "    ";
     std::string FixItString;
     llvm::raw_string_ostream FixItOS(FixItString);
-    FixItOS << "if (" << (SemaRef.getLangOpts().ObjC ? "@available"
-                                                     : "__builtin_available")
+    FixItOS << "if ("
+            << (SemaRef.getLangOpts().ObjC ? "@available"
+                                           : "__builtin_available")
             << "("
             << AvailabilityAttr::getPlatformNameSourceSpelling(
                    SemaRef.getASTContext().getTargetInfo().getPlatformName())
@@ -1055,7 +1048,7 @@ void Sema::DiagnoseAvailabilityOfDecl(NamedDecl *D,
                                       ObjCInterfaceDecl *ClassReceiver) {
   std::string Message;
   AvailabilityResult Result;
-  const NamedDecl* OffendingDecl;
+  const NamedDecl *OffendingDecl;
   // See if this declaration is unavailable, deprecated, or partial.
   std::tie(Result, OffendingDecl) =
       ShouldDiagnoseAvailabilityOfDecl(*this, D, &Message, ClassReceiver);

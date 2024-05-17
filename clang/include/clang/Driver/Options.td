@@ -7860,10 +7860,10 @@ def finclude_default_header : Flag<["-"], "finclude-default-header">,
 def fdeclare_opencl_builtins : Flag<["-"], "fdeclare-opencl-builtins">,
   HelpText<"Add OpenCL builtin function declarations (experimental)">;
 
-def fhlsl_strict_diagnostics : Flag<["-"], "fhlsl-strict-diagnostics">,
+def fhlsl_strict_availability : Flag<["-"], "fhlsl-strict-availability">,
   HelpText<"Enables strict availability diagnostic mode for HLSL built-in functions.">,
   Group<hlsl_Group>,
-  MarshallingInfoFlag<LangOpts<"HLSLStrictDiagnostics">>;
+  MarshallingInfoFlag<LangOpts<"HLSLStrictAvailability">>;
 
 def fpreserve_vec3_type : Flag<["-"], "fpreserve-vec3-type">,
   HelpText<"Preserve 3-component vector type">,
