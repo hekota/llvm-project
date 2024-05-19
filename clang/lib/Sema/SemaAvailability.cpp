@@ -808,7 +808,7 @@ void DiagnoseUnguardedAvailability::DiagnoseDeclAvailability(
       return;
 
     const AvailabilityAttr *AA =
-        getAttrForPlatform(SemaRef.getASTContext(), OffendingDecl);
+      getAttrForPlatform(SemaRef.getASTContext(), OffendingDecl);
     bool EnvironmentMatchesOrNone =
         hasMatchingEnvironmentOrNone(SemaRef.getASTContext(), AA);
     VersionTuple Introduced = AA->getIntroduced();
