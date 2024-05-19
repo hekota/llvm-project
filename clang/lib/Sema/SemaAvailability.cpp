@@ -886,7 +886,11 @@ void DiagnoseUnguardedAvailability::DiagnoseDeclAvailability(
         << SemaRef.Context.getTargetInfo().getPlatformMinVersion().getAsString()
         << UseEnvironment << AttrEnvironment << TargetEnvironment;
 
+<<<<<<< HEAD
     // In HLSL, do not offer to silence the warning or fixits
+=======
+    // Do not offer to silence the warning or fixits for HLSL
+>>>>>>> 74817635c3c7d813b490211b7c2c70a8e2eff3a4
     if (SemaRef.getLangOpts().HLSL)
       return;
 
