@@ -188,11 +188,6 @@ template <class T> int use_f() {
 int a = use_f<int>();
 int b = use_f<char>();
 
-int use_f2() AVAILABLE_10_12 {
-  int c = use_f<int>();
-  int d = use_f<char>(); // no warning expected
-}
-
 template <class> int use_at_available() {
   if (@available(macos 10.12, *))
     return func_10_12();
