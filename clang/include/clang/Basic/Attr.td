@@ -1068,21 +1068,17 @@ static llvm::StringRef getPrettyEnviromentName(llvm::StringRef Environment) {
              .Case("hull", "hull shader")
              .Case("domain", "domain shader")
              .Case("compute", "compute shader")
-<<<<<<< HEAD
              .Case("raygeneration", "ray generation shader")
              .Case("intersection", "intersection shader")
              .Case("anyhit", "anyhit shader")
              .Case("closesthit", "closesthit shader")
              .Case("miss", "miss shader")
              .Case("callable", "callable shader")
-=======
->>>>>>> 3f33c4c14e79e68007cf1460e4a0e606eb199da5
              .Case("mesh", "mesh shader")
              .Case("amplification", "amplification shader")
              .Case("library", "shader library")
              .Default(Environment);
 }
-<<<<<<< HEAD
 static llvm::StringRef getEnvironmentString(llvm::Triple::EnvironmentType EnvironmentType) {
   switch (EnvironmentType) {
     case llvm::Triple::EnvironmentType::Pixel: return "pixel";
@@ -1103,8 +1099,6 @@ static llvm::StringRef getEnvironmentString(llvm::Triple::EnvironmentType Enviro
     default: return "";
   }
 }
-=======
->>>>>>> 3f33c4c14e79e68007cf1460e4a0e606eb199da5
 static llvm::Triple::EnvironmentType getEnvironmentType(llvm::StringRef Environment) {
     return llvm::StringSwitch<llvm::Triple::EnvironmentType>(Environment)
              .Case("pixel", llvm::Triple::Pixel)
@@ -1113,15 +1107,12 @@ static llvm::Triple::EnvironmentType getEnvironmentType(llvm::StringRef Environm
              .Case("hull", llvm::Triple::Hull)
              .Case("domain", llvm::Triple::Domain)
              .Case("compute", llvm::Triple::Compute)
-<<<<<<< HEAD
              .Case("raygeneration", llvm::Triple::RayGeneration)
              .Case("intersection", llvm::Triple::Intersection)
              .Case("anyhit", llvm::Triple::AnyHit)
              .Case("closesthit", llvm::Triple::ClosestHit)
              .Case("miss", llvm::Triple::Miss)
              .Case("callable", llvm::Triple::Callable)
-=======
->>>>>>> 3f33c4c14e79e68007cf1460e4a0e606eb199da5
              .Case("mesh", llvm::Triple::Mesh)
              .Case("amplification", llvm::Triple::Amplification)
              .Case("library", llvm::Triple::Library)
