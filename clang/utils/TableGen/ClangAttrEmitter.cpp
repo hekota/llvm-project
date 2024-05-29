@@ -903,13 +903,15 @@ namespace {
     StringRef shortType;
     std::vector<StringRef> values, enums, uniques;
     bool isExternal;
+    bool defineLast;
 
   public:
     EnumArgument(const Record &Arg, StringRef Attr)
         : Argument(Arg, Attr), values(Arg.getValueAsListOfStrings("Values")),
           enums(Arg.getValueAsListOfStrings("Enums")),
           uniques(uniqueEnumsInOrder(enums)),
-          isExternal(Arg.getValueAsBit("IsExternalType")) {
+          isExternal(Arg.getValueAsBit("IsExternalType")),
+          defineLast(Arg.getValueAsBit("DefineLast")) {
       StringRef Type = Arg.getValueAsString("Type");
       shortType = isExternal ? Type.rsplit("::").second : Type;
       // If shortType didn't contain :: at all rsplit will give us an empty
@@ -949,14 +951,19 @@ namespace {
     void writeDeclarations(raw_ostream &OS) const override {
       if (!isExternal) {
         auto i = uniques.cbegin(), e = uniques.cend();
-        // The last one needs to not have a comma.
+        // The last one needs to not have a comma
         --e;
 
         OS << "public:\n";
         OS << "  enum " << shortType << " {\n";
         for (; i != e; ++i)
           OS << "    " << *i << ",\n";
-        OS << "    " << *e << "\n";
+        if (defineLast) {
+          OS << "    " << *e << ",\n";
+          OS << "    " << "Last" << shortType << " = " << *e << "\n";
+        } else {
+          OS << "    " << *e << "\n";
+        }
         OS << "  };\n";
       }
 
