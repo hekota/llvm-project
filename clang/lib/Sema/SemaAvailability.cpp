@@ -409,10 +409,11 @@ static void DoEmitAvailabilityWarning(Sema &S, AvailabilityResult K,
     std::string PlatformName(
         AvailabilityAttr::getPrettyPlatformName(TI.getPlatformName()));
     llvm::StringRef TargetEnvironment(AvailabilityAttr::getPrettyEnviromentName(
-        TI.getTriple().getEnvironmentName()));
+        TI.getTriple().getEnvironment()));
     llvm::StringRef AttrEnvironment =
         AA->getEnvironment() ? AvailabilityAttr::getPrettyEnviromentName(
-                                   AA->getEnvironment()->getName())
+                                   AvailabilityAttr::getEnvironmentType(
+                                       AA->getEnvironment()->getName()))
                              : "";
     bool UseEnvironment =
         (!AttrEnvironment.empty() && !TargetEnvironment.empty());
@@ -849,10 +850,11 @@ void DiagnoseUnguardedAvailability::DiagnoseDeclAvailability(
     std::string PlatformName(
         AvailabilityAttr::getPrettyPlatformName(TI.getPlatformName()));
     llvm::StringRef TargetEnvironment(AvailabilityAttr::getPrettyEnviromentName(
-        TI.getTriple().getEnvironmentName()));
+        TI.getTriple().getEnvironment()));
     llvm::StringRef AttrEnvironment =
         AA->getEnvironment() ? AvailabilityAttr::getPrettyEnviromentName(
-                                   AA->getEnvironment()->getName())
+                                   AvailabilityAttr::getEnvironmentType(
+                                       AA->getEnvironment()->getName()))
                              : "";
     bool UseEnvironment =
         (!AttrEnvironment.empty() && !TargetEnvironment.empty());
@@ -1020,11 +1022,6 @@ void Sema::DiagnoseUnguardedAvailabilityViolations(Decl *D) {
   Stmt *Body = nullptr;
 
   if (auto *FD = D->getAsFunction()) {
-    // FIXME: We only examine the pattern decl for availability violations now,
-    // but we should also examine instantiated templates.
-    if (FD->isTemplateInstantiation())
-      return;
-
     Body = FD->getBody();
 
     if (auto *CD = dyn_cast<CXXConstructorDecl>(FD))

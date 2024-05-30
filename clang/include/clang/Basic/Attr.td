@@ -1060,24 +1060,10 @@ static llvm::StringRef canonicalizePlatformName(llvm::StringRef Platform) {
              .Case("ShaderModel", "shadermodel")
              .Default(Platform);
 }
-static llvm::StringRef getPrettyEnviromentName(llvm::StringRef Environment) {
-    return llvm::StringSwitch<llvm::StringRef>(Environment)
-             .Case("pixel", "pixel shader")
-             .Case("vertex", "vertex shader")
-             .Case("geometry", "geometry shader")
-             .Case("hull", "hull shader")
-             .Case("domain", "domain shader")
-             .Case("compute", "compute shader")
-             .Case("raygeneration", "ray generation shader")
-             .Case("intersection", "intersection shader")
-             .Case("anyhit", "anyhit shader")
-             .Case("closesthit", "closesthit shader")
-             .Case("miss", "miss shader")
-             .Case("callable", "callable shader")
-             .Case("mesh", "mesh shader")
-             .Case("amplification", "amplification shader")
-             .Case("library", "shader library")
-             .Default(Environment);
+static llvm::StringRef getPrettyEnviromentName(llvm::Triple::EnvironmentType EnvironmentType) {
+  if (EnvironmentType >= llvm::Triple::Pixel && EnvironmentType <= llvm::Triple::Amplification)
+    return llvm::Triple::getEnvironmentTypeName(EnvironmentType);
+  return "";
 }
 static llvm::StringRef getEnvironmentString(llvm::Triple::EnvironmentType EnvironmentType) {
   switch (EnvironmentType) {
@@ -1672,10 +1658,11 @@ def Unlikely : StmtAttr {
 def : MutualExclusions<[Likely, Unlikely]>;
 
 def CXXAssume : StmtAttr {
-  let Spellings = [CXX11<"", "assume", 202207>];
+  let Spellings = [CXX11<"", "assume", 202207>, Clang<"assume">];
   let Subjects = SubjectList<[NullStmt], ErrorDiag, "empty statements">;
   let Args = [ExprArgument<"Assumption">];
   let Documentation = [CXXAssumeDocs];
+  let HasCustomParsing = 1;
 }
 
 def NoMerge : DeclOrStmtAttr {
@@ -2056,9 +2043,12 @@ def Convergent : InheritableAttr {
 def NoInline : DeclOrStmtAttr {
   let Spellings = [CustomKeyword<"__noinline__">, GCC<"noinline">,
                    CXX11<"clang", "noinline">, C23<"clang", "noinline">,
+                   CXX11<"msvc", "noinline">, C23<"msvc", "noinline">,
                    Declspec<"noinline">];
-  let Accessors = [Accessor<"isClangNoInline", [CXX11<"clang", "noinline">,
-                                                C23<"clang", "noinline">]>];
+  let Accessors = [Accessor<"isStmtNoInline", [CXX11<"clang", "noinline">,
+                                               C23<"clang", "noinline">,
+                                               CXX11<"msvc", "noinline">,
+                                               C23<"msvc", "noinline">]>];
   let Documentation = [NoInlineDocs];
   let Subjects = SubjectList<[Function, Stmt], WarnDiag,
                              "functions and statements">;
@@ -2288,7 +2278,8 @@ def TypeNullUnspecified : TypeAttr {
 def CountedBy : DeclOrTypeAttr {
   let Spellings = [Clang<"counted_by">];
   let Subjects = SubjectList<[Field], ErrorDiag>;
-  let Args = [ExprArgument<"Count">, IntArgument<"NestedLevel">];
+  let Args = [ExprArgument<"Count">, IntArgument<"NestedLevel", 1>];
+  let LateParsed = LateAttrParseExperimentalExt;
   let ParseArgumentsAsUnevaluated = 1;
   let Documentation = [CountedByDocs];
   let LangOpts = [COnly];
@@ -4287,7 +4278,7 @@ def OMPDeclareVariant : InheritableAttr {
 }
 
 def OMPAssume : InheritableAttr {
-  let Spellings = [Clang<"assume">, CXX11<"omp", "assume">];
+  let Spellings = [CXX11<"omp", "assume">];
   let Subjects = SubjectList<[Function, ObjCMethod]>;
   let InheritEvenIfAlreadyPresent = 1;
   let Documentation = [OMPAssumeDocs];
@@ -4508,22 +4499,25 @@ def HLSLShader : InheritableAttr {
   ];
   let Documentation = [HLSLSV_ShaderTypeAttrDocs];
   let AdditionalMembers =
-[{static llvm::Triple::EnvironmentType getTypeAsEnvironment(HLSLShaderAttr::ShaderType ShaderType) {
+[{
+  static const unsigned ShaderTypeMaxValue = (unsigned)HLSLShaderAttr::Amplification;
+
+  static llvm::Triple::EnvironmentType getTypeAsEnvironment(HLSLShaderAttr::ShaderType ShaderType) {
     switch (ShaderType) {
-      case HLSLShaderAttr::Pixel:         return llvm::Triple::EnvironmentType::Pixel;
-      case HLSLShaderAttr::Vertex:        return llvm::Triple::EnvironmentType::Vertex;
-      case HLSLShaderAttr::Geometry:      return llvm::Triple::EnvironmentType::Geometry;
-      case HLSLShaderAttr::Hull:          return llvm::Triple::EnvironmentType::Hull;
-      case HLSLShaderAttr::Domain:        return llvm::Triple::EnvironmentType::Domain;
-      case HLSLShaderAttr::Compute:       return llvm::Triple::EnvironmentType::Compute;
-      case HLSLShaderAttr::RayGeneration: return llvm::Triple::EnvironmentType::RayGeneration;
-      case HLSLShaderAttr::Intersection:  return llvm::Triple::EnvironmentType::Intersection;
-      case HLSLShaderAttr::AnyHit:        return llvm::Triple::EnvironmentType::AnyHit;
-      case HLSLShaderAttr::ClosestHit:    return llvm::Triple::EnvironmentType::ClosestHit;
-      case HLSLShaderAttr::Miss:          return llvm::Triple::EnvironmentType::Miss;
-      case HLSLShaderAttr::Callable:      return llvm::Triple::EnvironmentType::Callable;
-      case HLSLShaderAttr::Mesh:          return llvm::Triple::EnvironmentType::Mesh;
-      case HLSLShaderAttr::Amplification: return llvm::Triple::EnvironmentType::Amplification;
+      case HLSLShaderAttr::Pixel:         return llvm::Triple::Pixel;
+      case HLSLShaderAttr::Vertex:        return llvm::Triple::Vertex;
+      case HLSLShaderAttr::Geometry:      return llvm::Triple::Geometry;
+      case HLSLShaderAttr::Hull:          return llvm::Triple::Hull;
+      case HLSLShaderAttr::Domain:        return llvm::Triple::Domain;
+      case HLSLShaderAttr::Compute:       return llvm::Triple::Compute;
+      case HLSLShaderAttr::RayGeneration: return llvm::Triple::RayGeneration;
+      case HLSLShaderAttr::Intersection:  return llvm::Triple::Intersection;
+      case HLSLShaderAttr::AnyHit:        return llvm::Triple::AnyHit;
+      case HLSLShaderAttr::ClosestHit:    return llvm::Triple::ClosestHit;
+      case HLSLShaderAttr::Miss:          return llvm::Triple::Miss;
+      case HLSLShaderAttr::Callable:      return llvm::Triple::Callable;
+      case HLSLShaderAttr::Mesh:          return llvm::Triple::Mesh;
+      case HLSLShaderAttr::Amplification: return llvm::Triple::Amplification;
     }
   }
 }];
