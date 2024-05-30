@@ -408,13 +408,10 @@ static void DoEmitAvailabilityWarning(Sema &S, AvailabilityResult K,
     const TargetInfo &TI = S.getASTContext().getTargetInfo();
     std::string PlatformName(
         AvailabilityAttr::getPrettyPlatformName(TI.getPlatformName()));
-    llvm::StringRef TargetEnvironment(AvailabilityAttr::getPrettyEnviromentName(
-        TI.getTriple().getEnvironment()));
+    llvm::StringRef TargetEnvironment(
+        llvm::Triple::getEnvironmentTypeName(TI.getTriple().getEnvironment()));
     llvm::StringRef AttrEnvironment =
-        AA->getEnvironment() ? AvailabilityAttr::getPrettyEnviromentName(
-                                   AvailabilityAttr::getEnvironmentType(
-                                       AA->getEnvironment()->getName()))
-                             : "";
+        AA->getEnvironment() ? AA->getEnvironment()->getName() : "";
     bool UseEnvironment =
         (!AttrEnvironment.empty() && !TargetEnvironment.empty());
 
@@ -849,13 +846,9 @@ void DiagnoseUnguardedAvailability::DiagnoseDeclAvailability(
 
     std::string PlatformName(
         AvailabilityAttr::getPrettyPlatformName(TI.getPlatformName()));
-    llvm::StringRef TargetEnvironment(AvailabilityAttr::getPrettyEnviromentName(
-        TI.getTriple().getEnvironment()));
+    llvm::StringRef TargetEnvironment(TI.getTriple().getEnvironmentName());
     llvm::StringRef AttrEnvironment =
-        AA->getEnvironment() ? AvailabilityAttr::getPrettyEnviromentName(
-                                   AvailabilityAttr::getEnvironmentType(
-                                       AA->getEnvironment()->getName()))
-                             : "";
+        AA->getEnvironment() ? AA->getEnvironment()->getName() : "";
     bool UseEnvironment =
         (!AttrEnvironment.empty() && !TargetEnvironment.empty());
 

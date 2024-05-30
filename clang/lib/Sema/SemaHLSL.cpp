@@ -578,13 +578,10 @@ void DiagnoseHLSLAvailability::CheckDeclAvailability(NamedDecl *D,
       AvailabilityAttr::getPrettyPlatformName(TI.getPlatformName()));
 
   llvm::StringRef CurrentEnvStr =
-      AvailabilityAttr::getPrettyEnviromentName(GetCurrentShaderEnvironment());
+      llvm::Triple::getEnvironmentTypeName(GetCurrentShaderEnvironment());
 
-  llvm::StringRef AttrEnvStr = AA->getEnvironment()
-                                   ? AvailabilityAttr::getPrettyEnviromentName(
-                                         AvailabilityAttr::getEnvironmentType(
-                                             AA->getEnvironment()->getName()))
-                                   : "";
+  llvm::StringRef AttrEnvStr =
+      AA->getEnvironment() ? AA->getEnvironment()->getName() : "";
   bool UseEnvironment = !AttrEnvStr.empty();
 
   if (EnvironmentMatches) {
