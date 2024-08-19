@@ -13,6 +13,7 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Attr.h"
 #include "clang/AST/DeclCXX.h"
+#include "clang/AST/Type.h"
 #include "clang/Basic/AttrKinds.h"
 #include "clang/Basic/HLSLRuntime.h"
 #include "clang/Sema/Lookup.h"
@@ -111,13 +112,7 @@ struct BuiltinTypeDeclBuilder {
                   AccessSpecifier Access = AccessSpecifier::AS_private) {
     if (Record->isCompleteDefinition())
       return *this;
-    QualType Ty = Record->getASTContext().VoidPtrTy;
-    if (Template) {
-      if (const auto *TTD = dyn_cast<TemplateTypeParmDecl>(
-              Template->getTemplateParameters()->getParam(0)))
-        Ty = Record->getASTContext().getPointerType(
-            QualType(TTD->getTypeForDecl(), 0));
-    }
+
     // add handle member
     Attr *ResourceClassAttr =
         HLSLResourceClassAttr::CreateImplicit(Record->getASTContext(), RC);
@@ -125,7 +120,8 @@ struct BuiltinTypeDeclBuilder {
         HLSLResourceAttr::CreateImplicit(Record->getASTContext(), RK);
     Attr *ROVAttr =
         IsROV ? HLSLROVAttr::CreateImplicit(Record->getASTContext()) : nullptr;
-    addMemberVariable("h", Ty, {ResourceClassAttr, ResourceAttr, ROVAttr},
+    QualType HandleTy = Record->getASTContext().HLSLResourceTy;
+    addMemberVariable("h", HandleTy, {ResourceClassAttr, ResourceAttr, ROVAttr},
                       Access);
 
     return *this;
@@ -231,8 +227,14 @@ struct BuiltinTypeDeclBuilder {
     assert(Handle->getType().getCanonicalType() != AST.VoidPtrTy &&
            "Not yet supported for void pointer handles.");
 
-    QualType ElemTy =
-        QualType(Handle->getType()->getPointeeOrArrayElementType(), 0);
+    QualType ElemTy = AST.getPointerType(AST.Char8Ty);
+    if (Template) {
+      if (const auto *TTD = dyn_cast<TemplateTypeParmDecl>(
+              Template->getTemplateParameters()->getParam(0)))
+        ElemTy = Record->getASTContext().getPointerType(
+            QualType(TTD->getTypeForDecl(), 0));
+    }
+   
     QualType ReturnTy = ElemTy;
 
     FunctionProtoType::ExtProtoInfo ExtInfo;

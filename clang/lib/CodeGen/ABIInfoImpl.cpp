@@ -319,7 +319,11 @@ bool CodeGen::isEmptyFieldForLayout(const ASTContext &Context,
   if (FD->isUnnamedBitField())
     return false;
 
-  return isEmptyRecordForLayout(Context, FD->getType());
+  QualType FT = FD->getType();
+  if (FT->isSizelessBuiltinType())
+    return true;
+
+  return isEmptyRecordForLayout(Context, FT);
 }
 
 bool CodeGen::isEmptyRecordForLayout(const ASTContext &Context, QualType T) {
