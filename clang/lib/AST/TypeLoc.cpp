@@ -529,6 +529,11 @@ SourceRange BTFTagAttributedTypeLoc::getLocalSourceRange() const {
   return getAttr() ? getAttr()->getRange() : SourceRange();
 }
 
+SourceRange HLSLAttributedResourceTypeLoc::getLocalSourceRange() const {
+  // FIXME: figure out source range of the attributes
+  return SourceRange();
+}
+
 void TypeOfTypeLoc::initializeLocal(ASTContext &Context,
                                        SourceLocation Loc) {
   TypeofLikeTypeLoc<TypeOfTypeLoc, TypeOfType, TypeOfTypeLocInfo>
@@ -723,6 +728,11 @@ namespace {
     }
 
     TypeLoc VisitBTFTagAttributedTypeLoc(BTFTagAttributedTypeLoc T) {
+      return Visit(T.getWrappedLoc());
+    }
+
+    TypeLoc
+    VisitHLSLAttributedResourceTypeLoc(HLSLAttributedResourceTypeLoc T) {
       return Visit(T.getWrappedLoc());
     }
 

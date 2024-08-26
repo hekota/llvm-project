@@ -1,12 +1,14 @@
 // RUN: %clang_cc1 -triple dxil-pc-shadermodel6.0-compute -x hlsl -ast-dump -o - %s | FileCheck %s
 
-
+__hlsl_resource_t [[hlsl::resource_class(SRV)]] res1;
 // CHECK: -HLSLResourceClassAttr 0x{{[0-9a-f]+}} <col:31> SRV
-struct [[hlsl::resource_class(SRV)]] Eg1 {
+struct Eg1 {
   int i;  
 };
 
-Eg1 e1;
+Eg1 [[hlsl::resource_class(SRV)]] e1;
+Eg1 [[hlsl::is_rov]] e5;
+Eg1 [[hlsl::resource_class(SRV)]] [[hlsl::is_rov]] e6;
 
 // CHECK: -CXXRecordDecl 0x{{[0-9a-f]+}} <line:13:1, line:15:1> line:13:38 referenced struct Eg2 definition
 // CHECK: -HLSLResourceClassAttr 0x{{[0-9a-f]+}} <col:31> UAV

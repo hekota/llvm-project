@@ -9,15 +9,20 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Sema/SemaHLSL.h"
+#include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/RecursiveASTVisitor.h"
+#include "clang/AST/Type.h"
+#include "clang/Basic/AttrKinds.h"
 #include "clang/Basic/DiagnosticSema.h"
 #include "clang/Basic/LLVM.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Sema/ParsedAttr.h"
 #include "clang/Sema/Sema.h"
+#include "clang/Sema/Template.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/Casting.h"
@@ -437,26 +442,88 @@ void SemaHLSL::handleShaderAttr(Decl *D, const ParsedAttr &AL) {
     D->addAttr(NewAttr);
 }
 
-void SemaHLSL::handleResourceClassAttr(Decl *D, const ParsedAttr &AL) {
-  if (!AL.isArgIdent(0)) {
-    Diag(AL.getLoc(), diag::err_attribute_argument_type)
-        << AL << AANT_ArgumentIdentifier;
-    return;
+// Validates and creates an HLSL attribute that is applied as type attribute on
+// HLSL resource. The attributes are collected in HLSLResourcesAttrs and at the
+// end of the declaration they are applied to the declaration type by wrapping
+// it in HLSLAttributedResourceType.
+bool SemaHLSL::handleResourceTypeAttr(QualType &CurType, const ParsedAttr &PA) {
+  Attr *A = nullptr;
+  switch (PA.getKind()) {
+  case ParsedAttr::AT_HLSLResourceClass: {
+    if (!PA.isArgIdent(0)) {
+      Diag(PA.getLoc(), diag::err_attribute_argument_type)
+          << PA << AANT_ArgumentIdentifier;
+      return false;
+    }
+
+    IdentifierLoc *Loc = PA.getArgAsIdent(0);
+    StringRef Identifier = Loc->Ident->getName();
+    SourceLocation ArgLoc = Loc->Loc;
+
+    // Validate resource class value
+    llvm::dxil::ResourceClass RC;
+    if (!HLSLResourceClassAttr::ConvertStrToResourceClass(Identifier, RC)) {
+      Diag(ArgLoc, diag::warn_attribute_type_not_supported)
+          << "ResourceClass" << Identifier;
+      return false;
+    }
+    A = HLSLResourceClassAttr::Create(getASTContext(), RC, PA.getLoc());
+    break;
+  }
+  case ParsedAttr::AT_HLSLROV:
+    A = HLSLROVAttr::Create(getASTContext(), PA.getLoc());
+    break;
+  default:
+    llvm_unreachable("unhandled HLSL attribute");
   }
 
-  IdentifierLoc *Loc = AL.getArgAsIdent(0);
-  StringRef Identifier = Loc->Ident->getName();
-  SourceLocation ArgLoc = Loc->Loc;
+  HLSLResourcesTypeAttrs.emplace_back(A);
+  return true;
+}
 
-  // Validate.
-  llvm::dxil::ResourceClass RC;
-  if (!HLSLResourceClassAttr::ConvertStrToResourceClass(Identifier, RC)) {
-    Diag(ArgLoc, diag::warn_attribute_type_not_supported)
-        << "ResourceClass" << Identifier;
-    return;
+static QualType
+CreateHLSLAttributedResourceType(ASTContext &Ctx, QualType Wrapped,
+                                 llvm::SmallVector<Attr *, 4> &AttrList) {
+  assert(AttrList.size() && "expected list of resource attributes");
+
+  QualType Contained = QualType();
+  HLSLAttributedResourceType::Attributes ResAttrs;
+
+  bool hasResourceClass = false;
+  for (auto *Attr : AttrList) {
+    switch (Attr->getKind()) {
+    case attr::HLSLResourceClass: {
+      llvm::dxil::ResourceClass RC =
+          dyn_cast<HLSLResourceClassAttr>(Attr)->getResourceClass();
+      ResAttrs.ResourceClass = static_cast<int>(RC);
+      hasResourceClass = true;
+      break;
+    }
+    case attr::HLSLROV:
+      ResAttrs.IsROV = true;
+      break;
+    default:
+      llvm_unreachable("unhandled resource attribute type");
+    }
   }
 
-  D->addAttr(HLSLResourceClassAttr::Create(getASTContext(), RC, ArgLoc));
+  if (!hasResourceClass) {
+    // FIXME: pick default resource class, or error?
+    // S.Diag(...)
+    // return CurrentType;
+  }
+
+  return Ctx.getHLSLAttributedResourceType(Wrapped, Contained, ResAttrs);
+}
+
+QualType SemaHLSL::ProcessResourceTypeAttributes(QualType CurrentType) {
+  if (!HLSLResourcesTypeAttrs.size())
+    return CurrentType;
+
+  QualType QT = CreateHLSLAttributedResourceType(getASTContext(), CurrentType,
+                                                 HLSLResourcesTypeAttrs);
+  HLSLResourcesTypeAttrs.clear();
+  return QT;
 }
 
 void SemaHLSL::handleResourceBindingAttr(Decl *D, const ParsedAttr &AL) {

@@ -55,12 +55,17 @@ public:
   void handleSV_DispatchThreadIDAttr(Decl *D, const ParsedAttr &AL);
   void handlePackOffsetAttr(Decl *D, const ParsedAttr &AL);
   void handleShaderAttr(Decl *D, const ParsedAttr &AL);
-  void handleROVAttr(Decl *D, const ParsedAttr &AL);
-  void handleResourceClassAttr(Decl *D, const ParsedAttr &AL);
   void handleResourceBindingAttr(Decl *D, const ParsedAttr &AL);
   void handleParamModifierAttr(Decl *D, const ParsedAttr &AL);
+  bool handleResourceTypeAttr(QualType &CurType, const ParsedAttr &PA);
+
+  QualType ProcessResourceTypeAttributes(QualType CurrentType);
 
   bool CheckBuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall);
+
+private:
+  // list of resource attributes on the current decl
+  SmallVector<Attr *, 4> HLSLResourcesTypeAttrs;
 };
 
 } // namespace clang
