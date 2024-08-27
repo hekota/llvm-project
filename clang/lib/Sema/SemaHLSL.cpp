@@ -458,6 +458,11 @@ void SemaHLSL::handleShaderAttr(Decl *D, const ParsedAttr &AL) {
 // it in HLSLAttributedResourceType.
 bool SemaHLSL::handleResourceTypeAttr(const ParsedAttr &AL) {
   Attr *A = nullptr;
+
+  // validate number of arguments
+  if (!AL.checkExactlyNumArgs(SemaRef, AL.getMinArgs()))
+    return false;
+
   switch (AL.getKind()) {
   case ParsedAttr::AT_HLSLResourceClass: {
     if (!AL.isArgIdent(0)) {
@@ -503,10 +508,14 @@ CreateHLSLAttributedResourceType(Sema &S, QualType Wrapped,
   for (auto *Attr : AttrList) {
     switch (Attr->getKind()) {
     case attr::HLSLResourceClass: {
-      llvm::dxil::ResourceClass RC =
-          dyn_cast<HLSLResourceClassAttr>(Attr)->getResourceClass();
-      ResAttrs.ResourceClass = static_cast<int>(RC);
-      hasResourceClass = true;
+      llvm::dxil::ResourceClass RC = dyn_cast<HLSLResourceClassAttr>(Attr)->getResourceClass();
+      if (!hasResourceClass) {
+        ResAttrs.ResourceClass = static_cast<int>(RC);
+        hasResourceClass = true;
+      } else if (static_cast<int>(RC) != ResAttrs.ResourceClass) {
+        S.Diag(Attr->getLocation(), diag::warn_duplicate_attribute) << Attr;
+        return false;
+      }
       break;
     }
     case attr::HLSLROV:
