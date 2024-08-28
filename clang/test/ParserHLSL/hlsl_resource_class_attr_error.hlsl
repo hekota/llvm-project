@@ -4,6 +4,9 @@ struct SomeType {
   int i;  
 };
 
+// expected-error@+1{{'resource_class' attribute cannot be applied to a declaration}}
+[[hlsl::resource_class(UAV)]] SomeType e0;
+
 // expected-error@+1{{'resource_class' attribute takes one argument}}
 SomeType [[hlsl::resource_class()]] e1;
 

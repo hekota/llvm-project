@@ -452,6 +452,45 @@ void SemaHLSL::handleShaderAttr(Decl *D, const ParsedAttr &AL) {
     D->addAttr(NewAttr);
 }
 
+static bool
+CreateHLSLAttributedResourceType(Sema &S, QualType Wrapped,
+                                 llvm::SmallVector<const Attr *, 4> &AttrList, QualType &ResType) {
+  assert(AttrList.size() && "expected list of resource attributes");
+
+  QualType Contained = QualType();
+  HLSLAttributedResourceType::Attributes ResAttrs = {};
+
+  bool hasResourceClass = false;
+  for (auto *Attr : AttrList) {
+    switch (Attr->getKind()) {
+    case attr::HLSLResourceClass: {
+      llvm::dxil::ResourceClass RC = dyn_cast<HLSLResourceClassAttr>(Attr)->getResourceClass();
+      if (!hasResourceClass) {
+        ResAttrs.ResourceClass = static_cast<int>(RC);
+        hasResourceClass = true;
+      } else if (static_cast<int>(RC) != ResAttrs.ResourceClass) {
+        S.Diag(Attr->getLocation(), diag::warn_duplicate_attribute) << Attr;
+        return false;
+      }
+      break;
+    }
+    case attr::HLSLROV:
+      ResAttrs.IsROV = true;
+      break;
+    default:
+      llvm_unreachable("unhandled resource attribute type");
+    }
+  }
+
+  if (!hasResourceClass) {
+    S.Diag(AttrList.back()->getRange().getEnd(), diag::err_missing_resource_class);
+    return false;
+  }
+
+  ResType = S.getASTContext().getHLSLAttributedResourceType(Wrapped, Contained, ResAttrs);
+  return true;
+}
+
 // Validates and creates an HLSL attribute that is applied as type attribute on
 // HLSL resource. The attributes are collected in HLSLResourcesAttrs and at the
 // end of the declaration they are applied to the declaration type by wrapping
@@ -496,45 +535,7 @@ bool SemaHLSL::handleResourceTypeAttr(const ParsedAttr &AL) {
   return true;
 }
 
-static bool
-CreateHLSLAttributedResourceType(Sema &S, QualType Wrapped,
-                                 llvm::SmallVector<const Attr *, 4> &AttrList, QualType &ResType) {
-  assert(AttrList.size() && "expected list of resource attributes");
-
-  QualType Contained = QualType();
-  HLSLAttributedResourceType::Attributes ResAttrs;
-
-  bool hasResourceClass = false;
-  for (auto *Attr : AttrList) {
-    switch (Attr->getKind()) {
-    case attr::HLSLResourceClass: {
-      llvm::dxil::ResourceClass RC = dyn_cast<HLSLResourceClassAttr>(Attr)->getResourceClass();
-      if (!hasResourceClass) {
-        ResAttrs.ResourceClass = static_cast<int>(RC);
-        hasResourceClass = true;
-      } else if (static_cast<int>(RC) != ResAttrs.ResourceClass) {
-        S.Diag(Attr->getLocation(), diag::warn_duplicate_attribute) << Attr;
-        return false;
-      }
-      break;
-    }
-    case attr::HLSLROV:
-      ResAttrs.IsROV = true;
-      break;
-    default:
-      llvm_unreachable("unhandled resource attribute type");
-    }
-  }
-
-  if (!hasResourceClass) {
-    S.Diag(AttrList.back()->getRange().getEnd(), diag::err_missing_resource_class);
-    return false;
-  }
-
-  ResType = S.getASTContext().getHLSLAttributedResourceType(Wrapped, Contained, ResAttrs);
-  return true;
-}
-
+// Combines all resource type attributes and creates HLSLAttributedResourceType.
 QualType SemaHLSL::ProcessResourceTypeAttributes(QualType CurrentType) {
   if (!HLSLResourcesTypeAttrs.size())
     return CurrentType;
@@ -549,7 +550,9 @@ QualType SemaHLSL::ProcessResourceTypeAttributes(QualType CurrentType) {
   return QT;
 }
 
-SourceLocation SemaHLSL::TakeLocForHLSLAttribute(const HLSLAttributedResourceType *RT) {
+// Returns source location for the HLSLAttributedResourceType
+SourceLocation
+SemaHLSL::TakeLocForHLSLAttribute(const HLSLAttributedResourceType *RT) {
   auto I = LocsForHLSLAttributedResources.find(RT);
   if (I != LocsForHLSLAttributedResources.end()) {
     SourceLocation Loc = I->second;
@@ -557,27 +560,6 @@ SourceLocation SemaHLSL::TakeLocForHLSLAttribute(const HLSLAttributedResourceTyp
     return Loc;
   }
   llvm_unreachable("no SourceLocation for HLSLAttributedResourceType*");
-}
-
-// Validates HLSL resource type attribute and adds it to the list to be
-// processed into a single HLSLAttributedResourceType later on.
-// Returns false if the attribute is invalid.
-bool SemaHLSL::handleResourceTypeAttr(const ParsedAttr &AL) {
-  // FIXME: placeholder - not yet implemented
-  return true;
-}
-
-// Combines all resource type attributes and create HLSLAttributedResourceType.
-QualType SemaHLSL::ProcessResourceTypeAttributes(QualType CurrentType) {
-  // FIXME: placeholder - not yet implemented
-  return CurrentType;
-}
-
-// Returns source location for the HLSLAttributedResourceType
-SourceLocation
-SemaHLSL::TakeLocForHLSLAttribute(const HLSLAttributedResourceType *RT) {
-  // FIXME: placeholder - not yet implemented
-  return SourceLocation();
 }
 
 struct RegisterBindingFlags {

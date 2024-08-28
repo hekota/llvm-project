@@ -1,4 +1,7 @@
-// RUN: %clang_cc1 -triple dxil-pc-shadermodel6.0-compute -x hlsl -ast-dump -o - %s -verify
+// RUN: %clang_cc1 -triple dxil-pc-shadermodel6.0-compute -x hlsl -o - %s -verify
+
+// expected-error@+1{{'is_rov' attribute cannot be applied to a declaration}}
+[[hlsl::is_rov()]] __hlsl_resource_t res0;
 
 // expected-error@+1{{HLSL resource needs to have [[hlsl::resource_class()]] attribute}}
 __hlsl_resource_t [[hlsl::is_rov()]] res1;
