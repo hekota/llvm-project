@@ -452,9 +452,7 @@ void SemaHLSL::handleShaderAttr(Decl *D, const ParsedAttr &AL) {
     D->addAttr(NewAttr);
 }
 
-static bool
-CreateHLSLAttributedResourceType(Sema &S, QualType Wrapped,
-                                 llvm::SmallVector<const Attr *, 4> &AttrList, QualType &ResType) {
+bool SemaHLSL::CreateHLSLAttributedResourceType(Sema &S, QualType Wrapped, llvm::SmallVector<const Attr *> &AttrList, QualType &ResType) {
   assert(AttrList.size() && "expected list of resource attributes");
 
   QualType Contained = QualType();
@@ -462,13 +460,15 @@ CreateHLSLAttributedResourceType(Sema &S, QualType Wrapped,
 
   bool hasResourceClass = false;
   for (auto *Attr : AttrList) {
+    if (!Attr)
+      continue;
     switch (Attr->getKind()) {
     case attr::HLSLResourceClass: {
       llvm::dxil::ResourceClass RC = dyn_cast<HLSLResourceClassAttr>(Attr)->getResourceClass();
       if (!hasResourceClass) {
-        ResAttrs.ResourceClass = static_cast<int>(RC);
+        ResAttrs.ResourceClass = RC;
         hasResourceClass = true;
-      } else if (static_cast<int>(RC) != ResAttrs.ResourceClass) {
+      } else if (RC != ResAttrs.ResourceClass) {
         S.Diag(Attr->getLocation(), diag::warn_duplicate_attribute) << Attr;
         return false;
       }
@@ -559,7 +559,7 @@ SemaHLSL::TakeLocForHLSLAttribute(const HLSLAttributedResourceType *RT) {
     LocsForHLSLAttributedResources.erase(RT);
     return Loc;
   }
-  llvm_unreachable("no SourceLocation for HLSLAttributedResourceType*");
+  return SourceLocation();
 }
 
 struct RegisterBindingFlags {

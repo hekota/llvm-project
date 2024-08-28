@@ -69,10 +69,13 @@ public:
   // HLSL Type trait implementations
   bool IsScalarizedLayoutCompatible(QualType T1, QualType T2) const;
 
+  // FIXME: This can be hidden (as static function in SemaHLSL.cpp) once we no longer need to create builtin buffer types in HLSLExternalSemaSource.
+  static bool CreateHLSLAttributedResourceType(Sema &S, QualType Wrapped, llvm::SmallVector<const Attr *> &AttrList, QualType &ResType);
+
 private:
   // HLSL resource type attributes need to be processed all at once.
   // This is a list to collect them.
-  llvm::SmallVector<const Attr*, 4> HLSLResourcesTypeAttrs;
+  llvm::SmallVector<const Attr*> HLSLResourcesTypeAttrs;
 
   /// SourceRanges corresponding to HLSLAttributedResourceTypeLocs that we have not yet populated.
   llvm::DenseMap<const HLSLAttributedResourceType*, SourceLocation> LocsForHLSLAttributedResources;
