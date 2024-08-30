@@ -562,27 +562,6 @@ SemaHLSL::TakeLocForHLSLAttribute(const HLSLAttributedResourceType *RT) {
   return SourceLocation();
 }
 
-// Validates HLSL resource type attribute and adds it to the list to be
-// processed into a single HLSLAttributedResourceType later on.
-// Returns false if the attribute is invalid.
-bool SemaHLSL::handleResourceTypeAttr(const ParsedAttr &AL) {
-  // FIXME: placeholder - not yet implemented
-  return true;
-}
-
-// Combines all resource type attributes and create HLSLAttributedResourceType.
-QualType SemaHLSL::ProcessResourceTypeAttributes(QualType CurrentType) {
-  // FIXME: placeholder - not yet implemented
-  return CurrentType;
-}
-
-// Returns source location for the HLSLAttributedResourceType
-SourceLocation
-SemaHLSL::TakeLocForHLSLAttribute(const HLSLAttributedResourceType *RT) {
-  // FIXME: placeholder - not yet implemented
-  return SourceLocation();
-}
-
 struct RegisterBindingFlags {
   bool Resource = false;
   bool UDT = false;

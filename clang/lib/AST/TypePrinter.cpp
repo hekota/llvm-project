@@ -2056,6 +2056,7 @@ void TypePrinter::printBTFTagAttributedAfter(const BTFTagAttributedType *T,
 void TypePrinter::printHLSLAttributedResourceBefore(
     const HLSLAttributedResourceType *T, raw_ostream &OS) {
   printBefore(T->getWrappedType(), OS);
+  printAfter(T->getWrappedType(), OS);
 
   const HLSLAttributedResourceType::Attributes &Attrs = T->getAttrs();
   OS << " [[hlsl::resource_class("
@@ -2066,9 +2067,7 @@ void TypePrinter::printHLSLAttributedResourceBefore(
 }
 
 void TypePrinter::printHLSLAttributedResourceAfter(
-    const HLSLAttributedResourceType *T, raw_ostream &OS) {
-  printAfter(T->getWrappedType(), OS);
-}
+    const HLSLAttributedResourceType *T, raw_ostream &OS) {}
 
 void TypePrinter::printObjCInterfaceBefore(const ObjCInterfaceType *T,
                                            raw_ostream &OS) {
