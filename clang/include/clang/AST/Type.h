@@ -1685,6 +1685,7 @@ class ExtQualsTypeCommonBase {
   friend class ExtQuals;
   friend class QualType;
   friend class Type;
+  friend class ASTReader;
 
   /// The "base" type of an extended qualifiers type (\c ExtQuals) or
   /// a self-referential pointer (for \c Type).
@@ -6164,8 +6165,7 @@ public:
     uint8_t IsROV : 1;
     Attributes(llvm::dxil::ResourceClass ResourceClass, bool IsROV)
         : ResourceClass(ResourceClass), IsROV(IsROV) {}
-    Attributes()
-        : ResourceClass(llvm::dxil::ResourceClass::UAV), IsROV(0) {}
+    Attributes() : ResourceClass(llvm::dxil::ResourceClass::UAV), IsROV(0) {}
   };
 
 private:
