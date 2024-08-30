@@ -616,31 +616,16 @@ static void updateResourceClassFlagsFromDeclResourceClass(
   }
 }
 
-template <typename T>
-static const T *getSpecifiedHLSLAttrFromRecordDecl(RecordDecl *TheRecordDecl) {
-  if (!TheRecordDecl)
-    return nullptr;
-
-  if (TheRecordDecl->hasAttr<T>())
-    return TheRecordDecl->getAttr<T>();
-  for (auto *FD : TheRecordDecl->fields()) {
-    const T *Attr = FD->getAttr<T>();
-    if (Attr)
-      return Attr;
+const HLSLAttributedResourceType *findAttributedResourceTypeOnField(VarDecl *VD) {
+  assert(VD != nullptr && "expected VarDecl");
+  if (RecordDecl *RD = getRecordDeclFromVarDecl(VD)) {
+    for (auto *FD : RD->fields()) {
+      if (const HLSLAttributedResourceType *AttrResType =
+              dyn_cast<HLSLAttributedResourceType>(FD->getType().getTypePtr()))
+        return AttrResType;
+    }
   }
   return nullptr;
-}
-
-template <typename T>
-static const T *getSpecifiedHLSLAttrFromVarDecl(VarDecl *VD) {
-  RecordDecl *TheRecordDecl = nullptr;
-  if (VD) {
-    TheRecordDecl = getRecordDeclFromVarDecl(VD);
-    if (!TheRecordDecl)
-      return nullptr;
-  }
-
-  return getSpecifiedHLSLAttrFromRecordDecl<T>(TheRecordDecl);
 }
 
 static void updateResourceClassFlagsFromRecordType(RegisterBindingFlags &Flags,
@@ -662,10 +647,10 @@ static void updateResourceClassFlagsFromRecordType(RegisterBindingFlags &Flags,
 
     const RecordDecl *RD = RT->getDecl();
     for (FieldDecl *FD : RD->fields()) {
-      if (HLSLResourceClassAttr *RCAttr =
-              FD->getAttr<HLSLResourceClassAttr>()) {
-        updateResourceClassFlagsFromDeclResourceClass(
-            Flags, RCAttr->getResourceClass());
+      const Type *FieldTy = FD->getType().getTypePtr();
+      if (const HLSLAttributedResourceType *AttrResType =
+              dyn_cast<HLSLAttributedResourceType>(FieldTy)) {
+        updateResourceClassFlagsFromDeclResourceClass(Flags, AttrResType->getAttrs().ResourceClass);
         continue;
       }
       TypesToScan.emplace_back(FD->getType().getTypePtr());
@@ -692,11 +677,10 @@ static RegisterBindingFlags HLSLFillRegisterBindingFlags(Sema &S,
   }
   // Samplers, UAVs, and SRVs are VarDecl types
   else if (VarDecl *TheVarDecl = dyn_cast<VarDecl>(TheDecl)) {
-    const HLSLResourceClassAttr *resClassAttr =
-        getSpecifiedHLSLAttrFromVarDecl<HLSLResourceClassAttr>(TheVarDecl);
-    if (resClassAttr) {
+    if (const HLSLAttributedResourceType *AttrResType =
+            findAttributedResourceTypeOnField(TheVarDecl)) {
       Flags.Resource = true;
-      Flags.ResourceClass = resClassAttr->getResourceClass();
+      Flags.ResourceClass = AttrResType->getAttrs().ResourceClass;
     } else {
       const clang::Type *TheBaseType = TheVarDecl->getType().getTypePtr();
       while (TheBaseType->isArrayType())
