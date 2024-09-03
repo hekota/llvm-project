@@ -40,6 +40,9 @@ public:
   HLSLNumThreadsAttr *mergeNumThreadsAttr(Decl *D,
                                           const AttributeCommonInfo &AL, int X,
                                           int Y, int Z);
+  HLSLWaveSizeAttr *mergeWaveSizeAttr(Decl *D, const AttributeCommonInfo &AL,
+                                      int Min, int Max, int Preferred,
+                                      int SpelledArgsCount);
   HLSLShaderAttr *mergeShaderAttr(Decl *D, const AttributeCommonInfo &AL,
                                   llvm::Triple::EnvironmentType ShaderType);
   HLSLParamModifierAttr *
@@ -55,6 +58,7 @@ public:
   void DiagnoseAvailabilityViolations(TranslationUnitDecl *TU);
 
   void handleNumThreadsAttr(Decl *D, const ParsedAttr &AL);
+  void handleWaveSizeAttr(Decl *D, const ParsedAttr &AL);
   void handleSV_DispatchThreadIDAttr(Decl *D, const ParsedAttr &AL);
   void handlePackOffsetAttr(Decl *D, const ParsedAttr &AL);
   void handleShaderAttr(Decl *D, const ParsedAttr &AL);
@@ -69,8 +73,18 @@ public:
   // HLSL Type trait implementations
   bool IsScalarizedLayoutCompatible(QualType T1, QualType T2) const;
 
-  // FIXME: This can be hidden (as static function in SemaHLSL.cpp) once we no longer need to create builtin buffer types in HLSLExternalSemaSource.
-  static bool CreateHLSLAttributedResourceType(Sema &S, QualType Wrapped, llvm::SmallVector<const Attr *> &AttrList, QualType &ResType);
+  bool CheckCompatibleParameterABI(FunctionDecl *New, FunctionDecl *Old);
+
+  ExprResult ActOnOutParamExpr(ParmVarDecl *Param, Expr *Arg);
+
+  QualType getInoutParameterType(QualType Ty);
+
+  // FIXME: This can be hidden (as static function in SemaHLSL.cpp) once we no
+  // longer need to create builtin buffer types in HLSLExternalSemaSource.
+  static bool
+  CreateHLSLAttributedResourceType(Sema &S, QualType Wrapped,
+                                   llvm::SmallVector<const Attr *> &AttrList,
+                                   QualType &ResType);
 
 private:
   // HLSL resource type attributes need to be processed all at once.
@@ -78,7 +92,8 @@ private:
   llvm::SmallVector<const Attr*> HLSLResourcesTypeAttrs;
 
   /// SourceRanges corresponding to HLSLAttributedResourceTypeLocs that we have not yet populated.
-  llvm::DenseMap<const HLSLAttributedResourceType*, SourceLocation> LocsForHLSLAttributedResources;
+  llvm::DenseMap<const HLSLAttributedResourceType *, SourceLocation>
+      LocsForHLSLAttributedResources;
 };
 
 } // namespace clang
