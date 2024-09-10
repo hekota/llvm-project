@@ -8,7 +8,10 @@
 
 #include "ABIInfoImpl.h"
 #include "TargetInfo.h"
+#include "clang/AST/Type.h"
 #include "llvm/IR/DerivedTypes.h"
+#include "llvm/Support/DXILABI.h"
+#include "llvm/Support/ErrorHandling.h"
 
 using namespace clang;
 using namespace clang::CodeGen;
@@ -29,19 +32,42 @@ public:
 
 llvm::Type *DirectXTargetCodeGenInfo::getHLSLType(CodeGenModule &CGM,
                                                   const Type *Ty) const {
-  auto *BuiltinTy = dyn_cast<BuiltinType>(Ty);
-  if (!BuiltinTy || BuiltinTy->getKind() != BuiltinType::HLSLResource)
+  const HLSLAttributedResourceType *ResType =
+      dyn_cast<HLSLAttributedResourceType>(Ty);
+  if (!ResType)
     return nullptr;
 
   llvm::LLVMContext &Ctx = CGM.getLLVMContext();
-  // FIXME: translate __hlsl_resource_t to target("dx.TypedBuffer", <4 x float>,
-  // 1, 0, 1) only for now (RWBuffer<float4>); more work us needed to determine
-  // the target ext type and its parameters based on the handle type
-  // attributes (not yet implemented)
-  llvm::FixedVectorType *ElemType =
-      llvm::FixedVectorType::get(llvm::Type::getFloatTy(Ctx), 4);
-  unsigned Flags[] = {/*IsWriteable*/ 1, /*IsROV*/ 0, /*IsSigned*/ 0};
-  return llvm::TargetExtType::get(Ctx, "dx.TypedBuffer", {ElemType}, Flags);
+  const HLSLAttributedResourceType::Attributes &ResAttrs = ResType->getAttrs();
+  switch (ResAttrs.ResourceClass) {
+  case llvm::dxil::ResourceClass::UAV:
+  case llvm::dxil::ResourceClass::SRV: {
+    // convert element type
+    QualType ContainedTy = ResAttrs.ContainedType;
+    llvm::Type *ElemType = nullptr;
+    if (!ContainedTy.isNull())
+      ElemType = CGM... ConvertType(ContainedTy);
+
+    if (ResAttrs.RowAccess) {
+      unsigned Flags[] = {/*IsWriteable*/ ResAttrs.ResourceClass ==
+                              llvm::dxil::ResourceClass::UAV,
+                          /*IsROV*/ ResAttrs.IsROV,
+                          /*IsSigned*/ ContainedTy->isSignedIntegerType()};
+      return llvm::TargetExtType::get(Ctx, "dx.TypedBuffer", {ElemType}, Flags);
+    }
+
+    unsigned Flags[] = {/*IsWriteable*/ ResAttrs.ResourceClass ==
+                            llvm::dxil::ResourceClass::UAV,
+                        /*IsROV*/ ResAttrs.IsROV};
+    return llvm::TargetExtType::get(Ctx, "dx.RawBuffer", {ElemType}, Flags);
+  }
+  case llvm::dxil::ResourceClass::CBuffer:
+    llvm_unreachable("dx.CBuffer handles are not implemented yet");
+    break;
+  case llvm::dxil::ResourceClass::Sampler:
+    llvm_unreachable("dx.Sampler handles are not implemented yet");
+    break;
+  }
 }
 
 } // namespace
