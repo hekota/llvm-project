@@ -2214,7 +2214,7 @@ QualType SemaHLSL::getInoutParameterType(QualType Ty) {
 void SemaHLSL::ProcessResourceBindingOnDecl(VarDecl *D) {
   if (!D->hasGlobalStorage())
     return;
-  
+
   for (Attr *A : D->attrs()) {
     HLSLResourceBindingAttr *RBA = dyn_cast<HLSLResourceBindingAttr>(A);
     if (!RBA)
