@@ -15,11 +15,14 @@
 
 #include "clang/AST/ASTFwd.h"
 #include "clang/AST/Attr.h"
+#include "clang/AST/Attrs.inc"
 #include "clang/AST/Type.h"
 #include "clang/AST/TypeLoc.h"
 #include "clang/Basic/SourceLocation.h"
 #include "clang/Sema/SemaBase.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/Support/DXILABI.h"
 #include "llvm/TargetParser/Triple.h"
 #include <initializer_list>
 
@@ -28,12 +31,29 @@ class AttributeCommonInfo;
 class IdentifierInfo;
 class ParsedAttr;
 class Scope;
+class HLSLResourceBindingAttr;
+class Decl;
+
+using llvm::dxil::ResourceClass;
+
+using RegisterType = clang::HLSLResourceBindingAttr::RegisterType;
 
 // FIXME: This can be hidden (as static function in SemaHLSL.cpp) once we no
 // longer need to create builtin buffer types in HLSLExternalSemaSource.
 bool CreateHLSLAttributedResourceType(
     Sema &S, QualType Wrapped, ArrayRef<const Attr *> AttrList,
     QualType &ResType, HLSLAttributedResourceLocInfo *LocInfo = nullptr);
+
+struct RegisterBinding {
+  const Decl *ResourceDecl;
+  RegisterType Type;
+  unsigned Slot;
+  unsigned Space;
+  unsigned Size;
+
+  RegisterBinding(RegisterType Type, unsigned Slot, unsigned Space)
+      : ResourceDecl(nullptr), Type(Type), Slot(Slot), Space(Space), Size(0) {}
+};
 
 class SemaHLSL : public SemaBase {
 public:
@@ -43,6 +63,8 @@ public:
                          IdentifierInfo *Ident, SourceLocation IdentLoc,
                          SourceLocation LBrace);
   void ActOnFinishBuffer(Decl *Dcl, SourceLocation RBrace);
+  void ActOnEndOfTranslationUnit(TranslationUnitDecl *TU);
+
   HLSLNumThreadsAttr *mergeNumThreadsAttr(Decl *D,
                                           const AttributeCommonInfo &AL, int X,
                                           int Y, int Z);
@@ -62,6 +84,7 @@ public:
       const Attr *A, llvm::Triple::EnvironmentType Stage,
       std::initializer_list<llvm::Triple::EnvironmentType> AllowedStages);
   void DiagnoseAvailabilityViolations(TranslationUnitDecl *TU);
+  void ProcessResourceBindingOnDecl(VarDecl *D);
 
   QualType handleVectorBinOpConversion(ExprResult &LHS, ExprResult &RHS,
                                        QualType LHSType, QualType RHSType,

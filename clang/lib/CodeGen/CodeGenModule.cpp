@@ -5496,7 +5496,7 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D,
   if (getLangOpts().CUDA &&
       (IsCUDASharedVar || IsCUDAShadowVar || IsCUDADeviceShadowVar))
     Init = llvm::UndefValue::get(getTypes().ConvertTypeForMem(ASTTy));
-  else if (D->hasAttr<LoaderUninitializedAttr>())
+  else if (/*getLangOpts().HLSL ||*/ D->hasAttr<LoaderUninitializedAttr>())
     Init = llvm::UndefValue::get(getTypes().ConvertTypeForMem(ASTTy));
   else if (!InitExpr) {
     // This is a tentative definition; tentative definitions are
@@ -5616,6 +5616,11 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D,
     }
     getCUDARuntime().handleVarRegistration(D, *GV);
   }
+
+  // HLSL global variables with register bindings are initialized by a function
+  // calls, no need to be translated.
+  if (LangOpts.HLSL)
+    getHLSLRuntime().handleGlobalVarDefinition(D, GV);
 
   GV->setInitializer(Init);
   if (emitter)

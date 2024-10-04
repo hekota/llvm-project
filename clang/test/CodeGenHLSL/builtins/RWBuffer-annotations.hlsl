@@ -9,11 +9,10 @@ RWBuffer<vector<float, 4> > BufferArray2[4] : register(u4);
 RWBuffer<float> Buffer3 : register(u3, space1);
 RWBuffer<vector<float, 4> > BufferArray3[4] : register(u4, space1);
 
-
-
-[numthreads(1,1,1)]
-void main() {
-}
+struct MyStruct {
+  RWBuffer<float> Buf;
+};
+MyStruct S;
 
 // CHECK: !hlsl.uavs = !{![[Single:[0-9]+]], ![[Array:[0-9]+]], ![[SingleAllocated:[0-9]+]], ![[ArrayAllocated:[0-9]+]], ![[SingleSpace:[0-9]+]], ![[ArraySpace:[0-9]+]]}
 // CHECK-DAG: ![[Single]] = !{ptr @"?Buffer1@@3V?$RWBuffer@M@hlsl@@A", i32 10, i32 9, i1 false, i32 -1, i32 0}

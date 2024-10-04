@@ -83,4 +83,14 @@ let TargetPrefix = "spv" in {
     [IntrNoMem, Commutative] >;
   def int_spv_wave_is_first_lane : DefaultAttrsIntrinsic<[llvm_i1_ty], [], [IntrConvergent]>;
   def int_spv_sign : DefaultAttrsIntrinsic<[LLVMScalarOrSameVectorWidth<0, llvm_i32_ty>], [llvm_any_ty]>;
+
+// Create resource handle given binding information. Returns a target
+// type appropriate for the kind of resource given a register space ID, lower
+// bound and range size of the binding, as well as an index and an indicator
+// whether that index may be non-uniform.
+def int_spv_handle_fromBinding
+    : DefaultAttrsIntrinsic<
+          [llvm_any_ty],
+          [llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i1_ty],
+          [IntrNoMem]>;  
 }
