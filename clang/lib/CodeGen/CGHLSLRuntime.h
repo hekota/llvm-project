@@ -59,6 +59,7 @@ class HLSLBufferDecl;
 class HLSLResourceBindingAttr;
 class Type;
 class DeclContext;
+class CallExpr;
 
 class FunctionDecl;
 
@@ -133,6 +134,8 @@ public:
 
   void emitEntryFunction(const FunctionDecl *FD, llvm::Function *Fn);
   void setHLSLFunctionAttributes(const FunctionDecl *FD, llvm::Function *Fn);
+
+  llvm::Value *emitNullHandle(const CallExpr *E);
 
 private:
   void addBufferResourceAnnotation(llvm::GlobalVariable *GV,

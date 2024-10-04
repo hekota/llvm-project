@@ -1807,10 +1807,51 @@ static bool CheckVectorSelect(Sema *S, CallExpr *TheCall) {
   return false;
 }
 
+static const HLSLAttributedResourceType *
+findResourceHandleType(CXXRecordDecl *RD) {
+  for (auto *F : RD->fields()) {
+    if (F->getNameAsString() == "h") {
+      assert(isa<HLSLAttributedResourceType>(F->getType()) &&
+             "invalid handle type");
+      return cast<HLSLAttributedResourceType>(F->getType());
+    }
+  }
+  return nullptr;
+}
+
+static const HLSLAttributedResourceType *
+findResourceHandleType(const Expr *Res) {
+  if (const CXXConstructExpr *ConstrExpr = dyn_cast<CXXConstructExpr>(Res)) {
+    if (ConstrExpr->getNumArgs() == 1)
+      Res = ConstrExpr->getArg(0);
+  }
+  Res = Res->IgnoreImpCasts();
+  if (auto *ThisExpr = dyn_cast<CXXThisExpr>(Res)) {
+    auto *RD = ThisExpr->getType()->getAsCXXRecordDecl();
+    return findResourceHandleType(RD);
+  }
+  return nullptr;
+}
+
 // Note: returning true in this case results in CheckBuiltinFunctionCall
 // returning an ExprError
 bool SemaHLSL::CheckBuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
   switch (BuiltinID) {
+  case Builtin::BI__builtin_hlsl_create_null_handle: {
+    if (SemaRef.checkArgCount(TheCall, 1))
+      return true;
+
+    // the argument for __builtin_hlsl_create_null_handle should be
+    // CXXThisExpr of the resource class, may be wrapped in copy constructor
+    const HLSLAttributedResourceType *AttrResType =
+        findResourceHandleType(TheCall->getArg(0));
+    assert(AttrResType != nullptr &&
+           "__builtin_hlsl_create_null_handle takes a resource class");
+
+    // update return type to AttrResType
+    TheCall->setType(QualType(AttrResType, 0));
+    break;
+  }
   case Builtin::BI__builtin_hlsl_all:
   case Builtin::BI__builtin_hlsl_any: {
     if (SemaRef.checkArgCount(TheCall, 1))

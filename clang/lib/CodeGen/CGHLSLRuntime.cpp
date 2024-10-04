@@ -17,6 +17,7 @@
 #include "CodeGenModule.h"
 #include "TargetInfo.h"
 #include "clang/AST/Decl.h"
+#include "clang/AST/ExprCXX.h"
 #include "clang/Basic/TargetOptions.h"
 #include "llvm/IR/Metadata.h"
 #include "llvm/IR/Module.h"
@@ -488,4 +489,15 @@ void CGHLSLRuntime::generateGlobalCtorDtorCalls() {
     if (auto *GV = M.getNamedGlobal("llvm.global_dtors"))
       GV->eraseFromParent();
   }
+}
+
+llvm::Value *CGHLSLRuntime::emitNullHandle(const CallExpr *E) {
+  assert(isa<HLSLAttributedResourceType>(E->getType()));
+  const HLSLAttributedResourceType *AttrResType =
+      cast<HLSLAttributedResourceType>(E->getType());
+
+  // convert the handle type to target type and return Undef value
+  llvm::Type *TargetTy =
+      CGM.getTargetCodeGenInfo().getHLSLType(CGM, AttrResType);
+  return llvm::UndefValue::get(TargetTy);
 }

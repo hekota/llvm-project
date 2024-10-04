@@ -9,6 +9,8 @@
 
 RWBuffer<float> Buf;
 
+// CHECK: %"class.hlsl::RWBuffer" = type { target("dx.TypedBuffer", float, 1, 0, 0)
+
 // CHECK: define linkonce_odr noundef ptr @"??0?$RWBuffer@M@hlsl@@QAA@XZ"
 // CHECK-NEXT: entry:
 

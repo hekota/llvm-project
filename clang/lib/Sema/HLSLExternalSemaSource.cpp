@@ -13,6 +13,7 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Attr.h"
 #include "clang/AST/DeclCXX.h"
+#include "clang/AST/Expr.h"
 #include "clang/AST/Type.h"
 #include "clang/Basic/AttrKinds.h"
 #include "clang/Basic/HLSLRuntime.h"
@@ -23,6 +24,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Frontend/HLSL/HLSLResource.h"
 
+#include <cstddef>
 #include <functional>
 
 using namespace clang;
@@ -164,36 +166,54 @@ struct BuiltinTypeDeclBuilder {
                                VD, false, NameInfo, Ty, VK_PRValue);
   }
 
-  static Expr *emitResourceClassExpr(ASTContext &AST, ResourceClass RC) {
-    return IntegerLiteral::Create(
-        AST,
-        llvm::APInt(AST.getIntWidth(AST.UnsignedCharTy),
-                    static_cast<uint8_t>(RC)),
-        AST.UnsignedCharTy, SourceLocation());
-  }
-
   BuiltinTypeDeclBuilder &addDefaultHandleConstructor(Sema &S,
                                                       ResourceClass RC) {
     if (Record->isCompleteDefinition())
       return *this;
-    ASTContext &AST = Record->getASTContext();
+    // ASTContext &AST = Record->getASTContext();
 
-    QualType ConstructorType =
-        AST.getFunctionType(AST.VoidTy, {}, FunctionProtoType::ExtProtoInfo());
+    // QualType ConstructorType = AST.getFunctionType(
+    //     AST.VoidTy, {}, FunctionProtoType::ExtProtoInfo());
 
-    CanQualType CanTy = Record->getTypeForDecl()->getCanonicalTypeUnqualified();
-    DeclarationName Name = AST.DeclarationNames.getCXXConstructorName(CanTy);
-    CXXConstructorDecl *Constructor = CXXConstructorDecl::Create(
-        AST, Record, SourceLocation(),
-        DeclarationNameInfo(Name, SourceLocation()), ConstructorType,
-        AST.getTrivialTypeSourceInfo(ConstructorType, SourceLocation()),
-        ExplicitSpecifier(), false, true, false,
-        ConstexprSpecKind::Unspecified);
+    // CanQualType CanTy =
+    //     Record->getTypeForDecl()->getCanonicalTypeUnqualified();
+    // DeclarationName Name = AST.DeclarationNames.getCXXConstructorName(CanTy);
+    // CXXConstructorDecl *Constructor = CXXConstructorDecl::Create(
+    //     AST, Record, SourceLocation(),
+    //     DeclarationNameInfo(Name, SourceLocation()), ConstructorType,
+    //     AST.getTrivialTypeSourceInfo(ConstructorType, SourceLocation()),
+    //     ExplicitSpecifier(), false, true, false,
+    //     ConstexprSpecKind::Unspecified);
 
-    Constructor->setBody(CompoundStmt::Create(
-        AST, {}, FPOptionsOverride(), SourceLocation(), SourceLocation()));
-    Constructor->setAccess(AccessSpecifier::AS_public);
-    Record->addDecl(Constructor);
+    // // Generate code for:
+    // //
+    // //   (void)this.h = __builtin_hlsl_create_null_handle(this);
+    // //
+    // FieldDecl *HandleDecl = Fields["h"];
+    // assert(HandleDecl != nullptr &&
+    //        "Constructor operator must be added after the handle.");
+
+    // DeclRefExpr *Fn =
+    //     lookupBuiltinFunction(AST, S, "__builtin_hlsl_create_null_handle");
+    // CXXThisExpr *This = CXXThisExpr::Create(
+    //     AST, SourceLocation(), Constructor->getFunctionObjectParameterType(),
+    //     true);
+    // Expr *Call =
+    //     CallExpr::Create(AST, Fn, {This}, HandleDecl->getType(), VK_PRValue,
+    //                      SourceLocation(), FPOptionsOverride());
+
+    // Expr *Handle = MemberExpr::CreateImplicit(AST, This, false, HandleDecl,
+    //                                           HandleDecl->getType(),
+    //                                           VK_LValue, OK_Ordinary);
+    // BinaryOperator *Assign = BinaryOperator::Create(
+    //     AST, Handle, Call, BO_Assign, Handle->getType(), VK_LValue,
+    //     OK_Ordinary, SourceLocation(), FPOptionsOverride());
+
+    // Constructor->setBody(
+    //     CompoundStmt::Create(AST, {Assign}, FPOptionsOverride(),
+    //                          SourceLocation(), SourceLocation()));
+    // Constructor->setAccess(AccessSpecifier::AS_public);
+    // Record->addDecl(Constructor);
     return *this;
   }
 

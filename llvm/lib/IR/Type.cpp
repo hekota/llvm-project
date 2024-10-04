@@ -881,7 +881,7 @@ static TargetTypeInfo getTargetTypeInfo(const TargetExtType *Ty) {
 
   // DirectX resources
   if (Name.starts_with("dx."))
-    return TargetTypeInfo(PointerType::get(C, 0));
+    return TargetTypeInfo(PointerType::get(C, 0), TargetExtType::HasZeroInit);
 
   return TargetTypeInfo(Type::getVoidTy(C));
 }
