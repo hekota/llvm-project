@@ -12,16 +12,22 @@
 #include "clang/Sema/HLSLExternalSemaSource.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Attr.h"
+#include "clang/AST/Decl.h"
+#include "clang/AST/DeclBase.h"
 #include "clang/AST/DeclCXX.h"
+#include "clang/AST/Expr.h"
 #include "clang/AST/Type.h"
 #include "clang/Basic/AttrKinds.h"
 #include "clang/Basic/HLSLRuntime.h"
+#include "clang/Basic/IdentifierTable.h"
 #include "clang/Basic/SourceLocation.h"
 #include "clang/Sema/Lookup.h"
+#include "clang/Sema/Ownership.h"
 #include "clang/Sema/Sema.h"
 #include "clang/Sema/SemaHLSL.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Frontend/HLSL/HLSLResource.h"
+#include "llvm/Support/ErrorHandling.h"
 
 #include <functional>
 
@@ -42,6 +48,8 @@ struct BuiltinTypeDeclBuilder {
   BuiltinTypeDeclBuilder(CXXRecordDecl *R) : Record(R) {
     Record->startDefinition();
     Template = Record->getDescribedClassTemplate();
+    if (auto *ND = dyn_cast<NamespaceDecl>(Record->getDeclContext()))
+      HLSLNamespace = ND;
   }
 
   BuiltinTypeDeclBuilder(Sema &S, NamespaceDecl *Namespace, StringRef Name)
@@ -197,6 +205,72 @@ struct BuiltinTypeDeclBuilder {
     return *this;
   }
 
+  // CXXNamespaceDecl *getHLSLNamespaceDecl(Sema &S) {
+  //   IdentifierInfo &HLSL = S.GetASTContext().Idents.get("hlsl",
+  //   tok::TokenKind::identifier); LookupResult Result(S, &HLSL,
+  //   SourceLocation(), Sema::LookupNamespaceName); NamespaceDecl *PrevDecl =
+  //   nullptr; if (S.LookupQualifiedName(Result, AST.getTranslationUnitDecl()))
+  //     return Result.getAsSingle<NamespaceDecl>();
+
+  //   llvm_unreachable("HLSL namespace not defined");
+  // }
+
+  CXXRecordDecl *getBindingStructDecl(Sema &S) {
+    NamespaceDecl *ND = HLSLNamespace;
+    if (!ND) {
+      assert(isa<NamespaceDecl>(Record->getDeclContext()));
+      ND = cast<NamespaceDecl>(Record->getDeclContext());
+    }
+
+    LookupResult Result(S, &S.getASTContext().Idents.get("Binding"),
+                        SourceLocation(), Sema::LookupTagName);
+    if (S.LookupQualifiedName(Result, ND)) {
+      NamedDecl *Found = Result.getFoundDecl();
+      if (auto *BD = dyn_cast<CXXRecordDecl>(Found)) {
+        return BD;
+      }
+    }
+    llvm_unreachable("Binding struct not defined");
+  }
+
+  BuiltinTypeDeclBuilder &addHandleConstructorWithBinding(Sema &S) {
+    if (Record->isCompleteDefinition())
+      return *this;
+    ASTContext &AST = Record->getASTContext();
+
+    CXXRecordDecl *BindingStructDecl = getBindingStructDecl(S);
+    if (!BindingStructDecl->isCompleteDefinition()) {
+      AST.getExternalSource()->CompleteType(BindingStructDecl);
+    }
+
+    QualType BindingTy(BindingStructDecl->getTypeForDecl(), 0);
+    QualType ConstructorType = AST.getFunctionType(
+        AST.VoidTy, {BindingTy}, FunctionProtoType::ExtProtoInfo());
+
+    CanQualType CanTy = Record->getTypeForDecl()->getCanonicalTypeUnqualified();
+    DeclarationName Name = AST.DeclarationNames.getCXXConstructorName(CanTy);
+    CXXConstructorDecl *Constructor = CXXConstructorDecl::Create(
+        AST, Record, SourceLocation(),
+        DeclarationNameInfo(Name, SourceLocation()), ConstructorType,
+        AST.getTrivialTypeSourceInfo(ConstructorType, SourceLocation()),
+        ExplicitSpecifier(), false, true, false,
+        ConstexprSpecKind::Unspecified);
+
+    ParmVarDecl *BindingParam = ParmVarDecl::Create(
+        AST, Record, SourceLocation(), SourceLocation(), &AST.Idents.get("B"),
+        BindingTy, AST.CreateTypeSourceInfo(BindingTy), StorageClass::SC_Auto,
+        nullptr);
+    Constructor->setParams({BindingParam});
+
+    // TODO: add call to __hlsl_create_handle_from_binding(h, slot, space)
+
+    Constructor->setBody(CompoundStmt::Create(
+        AST, {}, FPOptionsOverride(), SourceLocation(), SourceLocation()));
+    Constructor->setAccess(AccessSpecifier::AS_public);
+    Record->addDecl(Constructor);
+    return *this;
+  }
+
   BuiltinTypeDeclBuilder &addArraySubscriptOperators() {
     if (Record->isCompleteDefinition())
       return *this;
@@ -296,6 +370,59 @@ struct BuiltinTypeDeclBuilder {
            "Definition must be started before completing it.");
 
     Record->completeDefinition();
+    return *this;
+  }
+
+  // Create constructor:
+  //    Binding(uint Slot, uint Space) : Slot(Slot), Space(Space) {}
+  // For:
+  //   struct Binding {
+  //     int Slot;
+  //     int Space;
+  //   };
+  BuiltinTypeDeclBuilder &addBindingConstructor(Sema &S) {
+    if (Record->isCompleteDefinition())
+      return *this;
+    ASTContext &AST = Record->getASTContext();
+
+    QualType ConstructorType = AST.getFunctionType(
+        AST.VoidTy, {AST.IntTy, AST.IntTy}, FunctionProtoType::ExtProtoInfo());
+
+    CanQualType CanTy =
+        AST.getRecordType(Record)->getCanonicalTypeUnqualified();
+    DeclarationName Name = AST.DeclarationNames.getCXXConstructorName(CanTy);
+    CXXConstructorDecl *Constructor = CXXConstructorDecl::Create(
+        AST, Record, SourceLocation(),
+        DeclarationNameInfo(Name, SourceLocation()), ConstructorType,
+        AST.getTrivialTypeSourceInfo(ConstructorType, SourceLocation()),
+        ExplicitSpecifier(), false, true, false,
+        ConstexprSpecKind::Unspecified);
+
+    ParmVarDecl *SlotParam = ParmVarDecl::Create(
+        AST, Record, SourceLocation(), SourceLocation(),
+        &AST.Idents.get("Slot"), AST.IntTy, AST.CreateTypeSourceInfo(AST.IntTy),
+        StorageClass::SC_Auto, nullptr);
+    ParmVarDecl *SpaceParam = ParmVarDecl::Create(
+        AST, Record, SourceLocation(), SourceLocation(),
+        &AST.Idents.get("Space"), AST.IntTy,
+        AST.CreateTypeSourceInfo(AST.IntTy), StorageClass::SC_Auto, nullptr);
+    Constructor->setParams({SlotParam, SpaceParam});
+
+    DeclRefExpr *SlotParamDeclRef = DeclRefExpr::Create(
+        AST, NestedNameSpecifierLoc(), SourceLocation(), SlotParam, false,
+        DeclarationNameInfo(SlotParam->getDeclName(), SourceLocation()),
+        AST.IntTy, VK_LValue);
+
+    CXXCtorInitializer *ConstrInits[] = {
+        S.BuildMemberInitializer(Fields["Slot"], SlotParamDeclRef,
+                                 SourceLocation())
+            .get()};
+    S.SetCtorInitializers(Constructor, false, ConstrInits);
+
+    Constructor->setBody(CompoundStmt::Create(
+        AST, {}, FPOptionsOverride(), SourceLocation(), SourceLocation()));
+    Constructor->setAccess(AccessSpecifier::AS_public);
+    Record->addDecl(Constructor);
     return *this;
   }
 
@@ -475,16 +602,34 @@ void HLSLExternalSemaSource::defineTrivialHLSLTypes() {
 }
 
 /// Set up common members and attributes for buffer types
+static BuiltinTypeDeclBuilder setupBindingStruct(CXXRecordDecl *Decl, Sema &S) {
+  return BuiltinTypeDeclBuilder(Decl)
+      .addMemberVariable("Slot", S.getASTContext().IntTy, {})
+      .addMemberVariable("Space", S.getASTContext().IntTy, {})
+      .addBindingConstructor(S);
+}
+
 static BuiltinTypeDeclBuilder setupBufferType(CXXRecordDecl *Decl, Sema &S,
                                               ResourceClass RC, ResourceKind RK,
                                               bool IsROV, bool RawBuffer) {
   return BuiltinTypeDeclBuilder(Decl)
       .addHandleMember(S, RC, RK, IsROV, RawBuffer)
-      .addDefaultHandleConstructor(S, RC);
+      .addDefaultHandleConstructor(S, RC)
+      .addHandleConstructorWithBinding(S);
 }
 
 void HLSLExternalSemaSource::defineHLSLTypesWithForwardDeclarations() {
   CXXRecordDecl *Decl;
+
+  // Binding struct - must be a complete type, it s referenced buffer
+  // constructors
+  Decl = BuiltinTypeDeclBuilder(*SemaPtr, HLSLNamespace, "Binding").Record;
+
+  onCompletion(Decl, [this](CXXRecordDecl *Decl) {
+    setupBindingStruct(Decl, *SemaPtr).completeDefinition();
+  });
+
+  // Buffer types
   Decl = BuiltinTypeDeclBuilder(*SemaPtr, HLSLNamespace, "RWBuffer")
              .addSimpleTemplateParams(*SemaPtr, {"element_type"})
              .Record;
