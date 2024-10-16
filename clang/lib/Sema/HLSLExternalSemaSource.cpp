@@ -48,8 +48,6 @@ struct BuiltinTypeDeclBuilder {
   BuiltinTypeDeclBuilder(CXXRecordDecl *R) : Record(R) {
     Record->startDefinition();
     Template = Record->getDescribedClassTemplate();
-    if (auto *ND = dyn_cast<NamespaceDecl>(Record->getDeclContext()))
-      HLSLNamespace = ND;
   }
 
   BuiltinTypeDeclBuilder(Sema &S, NamespaceDecl *Namespace, StringRef Name)
