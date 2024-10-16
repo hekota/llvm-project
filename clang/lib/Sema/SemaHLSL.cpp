@@ -1037,16 +1037,7 @@ SemaHLSL::TakeLocForHLSLAttribute(const HLSLAttributedResourceType *RT) {
 // Returns handle type of a resource, if the type is a resource
 static const HLSLAttributedResourceType *
 findHandleTypeOnResource(const Type *Ty) {
-  // If Ty is a resource class, the first field must
-  // be the resource handle of type HLSLAttributedResourceType
-  if (RecordDecl *RD = Ty->getAsCXXRecordDecl()) {
-    if (!RD->fields().empty()) {
-      const auto &FirstFD = RD->fields().begin();
-      return dyn_cast<HLSLAttributedResourceType>(
-          FirstFD->getType().getTypePtr());
-    }
-  }
-  return nullptr;
+  return HLSLAttributedResourceType::findHandleTypeOnResource(Ty);
 }
 
 // Walks though the global variable declaration, collects all resource binding
