@@ -12,6 +12,8 @@
 #include "clang/Sema/HLSLExternalSemaSource.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Attr.h"
+#include "clang/AST/Attrs.inc"
+#include "clang/AST/Decl.h"
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/Type.h"
 #include "clang/Basic/AttrKinds.h"
@@ -172,8 +174,7 @@ struct BuiltinTypeDeclBuilder {
         AST.UnsignedCharTy, SourceLocation());
   }
 
-  BuiltinTypeDeclBuilder &addDefaultHandleConstructor(Sema &S,
-                                                      ResourceClass RC) {
+  BuiltinTypeDeclBuilder &addDefaultHandleConstructor(Sema &S) {
     if (Record->isCompleteDefinition())
       return *this;
     ASTContext &AST = Record->getASTContext();
@@ -273,6 +274,96 @@ struct BuiltinTypeDeclBuilder {
     MethodDecl->setBody(CompoundStmt::Create(AST, {Return}, FPOptionsOverride(),
                                              SourceLocation(),
                                              SourceLocation()));
+    MethodDecl->setLexicalDeclContext(Record);
+    MethodDecl->setAccess(AccessSpecifier::AS_public);
+    MethodDecl->addAttr(AlwaysInlineAttr::CreateImplicit(
+        AST, SourceRange(), AlwaysInlineAttr::CXX11_clang_always_inline));
+    Record->addDecl(MethodDecl);
+
+    return *this;
+  }
+
+  FieldDecl *getResourceHandleField() {
+    FieldDecl *FD = Fields["h"];
+    if (FD && FD->getType()->isHLSLAttributedResourceType())
+      return FD;
+    return nullptr;
+  }
+
+  ParmVarDecl *createParamDecl(ASTContext &AST, StringRef Name,
+                               DeclContext *DeclCtx, QualType Ty,
+                               HLSLParamModifierAttr::Spelling Modifier =
+                                   HLSLParamModifierAttr::Keyword_in) {
+    IdentifierInfo &II = AST.Idents.get(Name, tok::TokenKind::identifier);
+    ParmVarDecl *Param = ParmVarDecl::Create(
+        AST, DeclCtx, SourceLocation(), SourceLocation(), &II, Ty,
+        AST.getTrivialTypeSourceInfo(Ty, SourceLocation()), SC_None, nullptr);
+    if (Modifier != HLSLParamModifierAttr::Keyword_in)
+      Param->addAttr(
+          HLSLParamModifierAttr::Create(AST, SourceRange(), Modifier));
+    return Param;
+  }
+
+  MemberExpr *createHandleMemberExpr(ASTContext &AST, QualType ThisTy,
+                                     FieldDecl *HandleDecl) {
+    auto *This = CXXThisExpr::Create(AST, SourceLocation(), ThisTy, true);
+    return MemberExpr::CreateImplicit(AST, This, false, HandleDecl,
+                                      HandleDecl->getType(), VK_LValue,
+                                      OK_Ordinary);
+  }
+
+  // "Append"
+  // Params (value)
+  // ReturnType (AST.VoidTy)
+  // __builtin_hlsl_resource_append ?
+  BuiltinTypeDeclBuilder &addAppendMethod(Sema &S) {
+    assert(Record != nullptr);
+    if (Record->isCompleteDefinition())
+      return *this;
+
+    ASTContext &AST = S.getASTContext();
+    FieldDecl *HandleField = getResourceHandleField();
+    assert(HandleField != nullptr);
+    const HLSLAttributedResourceType *AttrResType =
+        dyn_cast<HLSLAttributedResourceType>(
+            HandleField->getType().getTypePtr());
+
+    QualType MethodTy =
+        AST.getFunctionType(AST.VoidTy, {AttrResType->getContainedType()},
+                            FunctionProtoType::ExtProtoInfo());
+
+    auto *TSInfo = AST.getTrivialTypeSourceInfo(MethodTy, SourceLocation());
+    IdentifierInfo &II = AST.Idents.get("Append", tok::TokenKind::identifier);
+    DeclarationNameInfo NameInfo =
+        DeclarationNameInfo(DeclarationName(&II), SourceLocation());
+    auto *MethodDecl = CXXMethodDecl::Create(
+        AST, Record, SourceLocation(), NameInfo, MethodTy, TSInfo, SC_None,
+        false, false, ConstexprSpecKind::Unspecified, SourceLocation());
+
+    auto *ValueParam =
+        createParamDecl(AST, "value", MethodDecl->getDeclContext(),
+                        AttrResType->getContainedType());
+    MethodDecl->setParams({ValueParam});
+
+    // Also add the parameter to the function prototype.
+    auto FnProtoLoc = TSInfo->getTypeLoc().getAs<FunctionProtoTypeLoc>();
+    FnProtoLoc.setParam(0, ValueParam);
+
+    Expr *HandleExpr = createHandleMemberExpr(
+        AST, MethodDecl->getFunctionObjectParameterType(), HandleField);
+    Expr *ValueParamExpr = DeclRefExpr::Create(
+        AST, NestedNameSpecifierLoc(), SourceLocation(), ValueParam, false,
+        NameInfo, ValueParam->getType(), VK_PRValue);
+
+    DeclRefExpr *Fn =
+        lookupBuiltinFunction(AST, S, "__builtin_hlsl_resource_append");
+
+    Expr *Call =
+        CallExpr::Create(AST, Fn, {HandleExpr, ValueParamExpr}, AST.VoidPtrTy,
+                         VK_PRValue, SourceLocation(), FPOptionsOverride());
+
+    MethodDecl->setBody(CompoundStmt::Create(
+        AST, {Call}, FPOptionsOverride(), SourceLocation(), SourceLocation()));
     MethodDecl->setLexicalDeclContext(Record);
     MethodDecl->setAccess(AccessSpecifier::AS_public);
     MethodDecl->addAttr(AlwaysInlineAttr::CreateImplicit(
@@ -480,7 +571,7 @@ static BuiltinTypeDeclBuilder setupBufferType(CXXRecordDecl *Decl, Sema &S,
                                               bool IsROV, bool RawBuffer) {
   return BuiltinTypeDeclBuilder(Decl)
       .addHandleMember(S, RC, RK, IsROV, RawBuffer)
-      .addDefaultHandleConstructor(S, RC);
+      .addDefaultHandleConstructor(S);
 }
 
 void HLSLExternalSemaSource::defineHLSLTypesWithForwardDeclarations() {
@@ -528,6 +619,29 @@ void HLSLExternalSemaSource::defineHLSLTypesWithForwardDeclarations() {
                     ResourceKind::TypedBuffer, /*IsROV=*/false,
                     /*RawBuffer=*/true)
         .addArraySubscriptOperators()
+        .completeDefinition();
+  });
+
+  Decl =
+      BuiltinTypeDeclBuilder(*SemaPtr, HLSLNamespace, "AppendStructuredBuffer")
+          .addSimpleTemplateParams(*SemaPtr, {"element_type"})
+          .Record;
+  onCompletion(Decl, [this](CXXRecordDecl *Decl) {
+    setupBufferType(Decl, *SemaPtr, ResourceClass::UAV,
+                    ResourceKind::TypedBuffer, /*IsROV=*/false,
+                    /*RawBuffer=*/true)
+        .addAppendMethod(*SemaPtr)
+        .completeDefinition();
+  });
+
+  Decl =
+      BuiltinTypeDeclBuilder(*SemaPtr, HLSLNamespace, "ConsumeStructuredBuffer")
+          .addSimpleTemplateParams(*SemaPtr, {"element_type"})
+          .Record;
+  onCompletion(Decl, [this](CXXRecordDecl *Decl) {
+    setupBufferType(Decl, *SemaPtr, ResourceClass::UAV,
+                    ResourceKind::TypedBuffer, /*IsROV=*/false,
+                    /*RawBuffer=*/true)
         .completeDefinition();
   });
 }
