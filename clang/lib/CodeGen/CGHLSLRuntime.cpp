@@ -119,7 +119,7 @@ static int getTotalArraySize(ASTContext &AST, const clang::Type *Ty) {
 static CXXConstructorDecl *findResourceConstructorDecl(ASTContext &AST,
                                                        QualType ResTy,
                                                        bool ExplicitBinding) {
-  SmallVector<QualType> ExpParmTypes = {
+  std::array<QualType, 5> ExpParmTypes = {
       AST.UnsignedIntTy, AST.UnsignedIntTy, AST.UnsignedIntTy,
       AST.UnsignedIntTy, AST.getPointerType(AST.CharTy.withConst())};
   ExpParmTypes[ExplicitBinding ? 2 : 1] = AST.IntTy;
@@ -128,8 +128,8 @@ static CXXConstructorDecl *findResourceConstructorDecl(ASTContext &AST,
   for (auto *Ctor : ResDecl->ctors()) {
     if (Ctor->getNumParams() != ExpParmTypes.size())
       continue;
-    ParmVarDecl **ParmIt = Ctor->param_begin();
-    QualType *ExpTyIt = ExpParmTypes.begin();
+    auto *ParmIt = Ctor->param_begin();
+    auto ExpTyIt = ExpParmTypes.begin();
     for (; ParmIt != Ctor->param_end() && ExpTyIt != ExpParmTypes.end();
          ++ParmIt, ++ExpTyIt) {
       if ((*ParmIt)->getType() != *ExpTyIt)
