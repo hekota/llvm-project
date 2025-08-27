@@ -241,6 +241,12 @@ private:
 
   bool initGlobalResourceDecl(VarDecl *VD);
   bool initGlobalResourceArrayDecl(VarDecl *VD);
+  CallExpr *createResourceInitExpr(QualType ResourceTy, StringRef VarName,
+                                   HLSLResourceBindingAttr *RBA,
+                                   HLSLVkBindingAttr *VkBinding,
+                                   uint32_t ArrayIndex,
+                                   SourceLocation Loc = SourceLocation());
+
   void createResourceRecordCtorArgs(const Type *ResourceTy, StringRef VarName,
                                     HLSLResourceBindingAttr *RBA,
                                     HLSLVkBindingAttr *VkBinding,

@@ -14,6 +14,7 @@
 #ifndef LLVM_CLANG_SEMA_HLSLBUILTINTYPEDECLBUILDER_H
 #define LLVM_CLANG_SEMA_HLSLBUILTINTYPEDECLBUILDER_H
 
+#include "clang/AST/DeclCXX.h"
 #include "clang/AST/Type.h"
 #include "clang/Sema/Sema.h"
 #include "llvm/ADT/StringMap.h"
@@ -52,6 +53,7 @@ private:
   ClassTemplateDecl *PrevTemplate = nullptr;
   NamespaceDecl *HLSLNamespace = nullptr;
   llvm::StringMap<FieldDecl *> Fields;
+  CXXConstructorDecl *HandleCtor = nullptr;
 
 public:
   friend struct TemplateParameterListBuilder;
@@ -77,9 +79,14 @@ public:
   BuiltinTypeDeclBuilder &addArraySubscriptOperators();
 
   // Builtin types constructors
-  BuiltinTypeDeclBuilder &addDefaultHandleConstructor();
+  BuiltinTypeDeclBuilder &addDefaultConstructor();
+  BuiltinTypeDeclBuilder &addHandleConstructor();
   BuiltinTypeDeclBuilder &addHandleConstructorFromBinding();
   BuiltinTypeDeclBuilder &addHandleConstructorFromImplicitBinding();
+
+  // Static create methods
+  BuiltinTypeDeclBuilder &addCreateFromBinding();
+  BuiltinTypeDeclBuilder &addCreateFromImplicitBinding();
 
   // Builtin types methods
   BuiltinTypeDeclBuilder &addLoadMethods();

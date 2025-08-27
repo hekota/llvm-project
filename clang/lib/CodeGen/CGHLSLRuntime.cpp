@@ -13,14 +13,18 @@
 //===----------------------------------------------------------------------===//
 
 #include "CGHLSLRuntime.h"
+#include "CGCall.h"
 #include "CGDebugInfo.h"
 #include "CodeGenFunction.h"
 #include "CodeGenModule.h"
 #include "TargetInfo.h"
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/CanonicalType.h"
 #include "clang/AST/Decl.h"
+#include "clang/AST/DeclCXX.h"
 #include "clang/AST/RecursiveASTVisitor.h"
 #include "clang/AST/Type.h"
+#include "clang/Basic/Specifiers.h"
 #include "clang/Basic/TargetOptions.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/SmallVector.h"
@@ -146,6 +150,16 @@ static Value *buildNameForResource(llvm::StringRef BaseName,
       .getPointer();
 }
 
+static CXXMethodDecl *lookupMethod(CXXRecordDecl *Record, StringRef Name,
+                                   StorageClass SC = SC_None) {
+  for (auto *Method : Record->methods()) {
+    if (Method->getStorageClass() == SC && Method->getName() == Name)
+      return Method;
+  }
+  llvm_unreachable("method not found");
+}
+
+#if 0
 static void createResourceCtorArgs(CodeGenModule &CGM, CXXConstructorDecl *CD,
                                    llvm::Value *ThisPtr, llvm::Value *Range,
                                    llvm::Value *Index, StringRef Name,
@@ -190,6 +204,50 @@ static void createResourceCtorArgs(CodeGenModule &CGM, CXXConstructorDecl *CD,
   Args.add(RValue::get(NameStr), AST.getPointerType(AST.CharTy.withConst()));
 }
 
+#else
+static CXXMethodDecl *lookupResourceInitMethodAndSetupArgs(
+    ASTContext &AST, CodeGenModule &CGM, CXXRecordDecl *ResourceDecl,
+    llvm::Value *Range, llvm::Value *Index, StringRef Name,
+    HLSLResourceBindingAttr *RBA, HLSLVkBindingAttr *VkBinding,
+    CallArgList &Args) {
+  assert((VkBinding || RBA) && "at least one a binding attribute expected");
+
+  std::optional<uint32_t> RegisterSlot;
+  uint32_t SpaceNo = 0;
+  if (VkBinding) {
+    RegisterSlot = VkBinding->getBinding();
+    SpaceNo = VkBinding->getSet();
+  } else {
+    if (RBA->hasRegisterSlot())
+      RegisterSlot = RBA->getSlotNumber();
+    SpaceNo = RBA->getSpaceNumber();
+  }
+
+  CXXMethodDecl *CreateMethod = nullptr;
+  Value *NameStr = buildNameForResource(Name, CGM);
+  Value *Space = llvm::ConstantInt::get(CGM.IntTy, SpaceNo);
+
+  if (RegisterSlot.has_value()) {
+    // explicit binding
+    auto *RegSlot = llvm::ConstantInt::get(CGM.IntTy, RegisterSlot.value());
+    Args.add(RValue::get(RegSlot), AST.UnsignedIntTy);
+    CreateMethod = lookupMethod(ResourceDecl, "__createFromBinding", SC_Static);
+  } else {
+    // implicit binding
+    auto *OrderID =
+        llvm::ConstantInt::get(CGM.IntTy, RBA->getImplicitBindingOrderID());
+    Args.add(RValue::get(OrderID), AST.UnsignedIntTy);
+    CreateMethod =
+        lookupMethod(ResourceDecl, "__createFromImplicitBinding", SC_Static);
+  }
+  Args.add(RValue::get(Space), AST.UnsignedIntTy);
+  Args.add(RValue::get(Range), AST.IntTy);
+  Args.add(RValue::get(Index), AST.UnsignedIntTy);
+  Args.add(RValue::get(NameStr), AST.getPointerType(AST.CharTy.withConst()));
+
+  return CreateMethod;
+}
+#endif
 } // namespace
 
 llvm::Type *
@@ -846,8 +904,8 @@ std::optional<LValue> CGHLSLRuntime::emitResourceArraySubscriptExpr(
 
   // lookup the resource class constructor based on the resource type and
   // binding
-  CXXConstructorDecl *CD = findResourceConstructorDecl(
-      AST, ResourceTy, VkBinding || RBA->hasRegisterSlot());
+  // CXXConstructorDecl *CD = findResourceConstructorDecl(
+  //     AST, ResourceTy, VkBinding || RBA->hasRegisterSlot());
 
   // create a temporary variable for the resource class instance (we need to
   // return an LValue)
@@ -861,15 +919,16 @@ std::optional<LValue> CGHLSLRuntime::emitResourceArraySubscriptExpr(
       AggValueSlot::DoesNotNeedGCBarriers, AggValueSlot::IsAliased_t(false),
       AggValueSlot::DoesNotOverlap);
 
-  Address ThisAddress = ValueSlot.getAddress();
-  llvm::Value *ThisPtr = CGF.getAsNaturalPointerTo(
-      ThisAddress, CD->getThisType()->getPointeeType());
-
   // get total array size (= range size)
   llvm::Value *Range =
       llvm::ConstantInt::get(CGM.IntTy, getTotalArraySize(AST, ResArrayTy));
 
-  // assemble the constructor parameters
+#if 0
+  Address ThisAddress = ValueSlot.getAddress();
+  llvm::Value *ThisPtr = CGF.getAsNaturalPointerTo(
+      ThisAddress, CD->getThisType()->getPointeeType());
+
+  //assemble the constructor parameters
   CallArgList Args;
   createResourceCtorArgs(CGM, CD, ThisPtr, Range, Index, ArrayDecl->getName(),
                          RBA, VkBinding, Args);
@@ -882,4 +941,25 @@ std::optional<LValue> CGHLSLRuntime::emitResourceArraySubscriptExpr(
 
   return CGF.MakeAddrLValue(TmpVar, ArraySubsExpr->getType(),
                             AlignmentSource::Decl);
+#else
+  CallArgList Args;
+  CXXMethodDecl *CreateMethod = lookupResourceInitMethodAndSetupArgs(
+      AST, CGF.CGM, ResourceTy->getAsCXXRecordDecl(), Range, Index,
+      ArrayDecl->getName(), RBA, VkBinding, Args);
+
+  llvm::Constant *CalleeFn = CGF.CGM.GetAddrOfFunction(CreateMethod);
+
+  const FunctionProtoType *Proto =
+      CreateMethod->getType()->getAs<FunctionProtoType>();
+  const CGFunctionInfo &FnInfo =
+      CGF.CGM.getTypes().arrangeFreeFunctionCall(Args, Proto, false);
+
+  ReturnValueSlot ReturnValue(ValueSlot.getAddress(), false);
+
+  CGCallee Callee(CGCalleeInfo(Proto), CalleeFn);
+  CGF.EmitCall(FnInfo, Callee, ReturnValue, Args, nullptr);
+
+  return CGF.MakeAddrLValue(TmpVar, ArraySubsExpr->getType(),
+                            AlignmentSource::Decl);
+#endif
 }

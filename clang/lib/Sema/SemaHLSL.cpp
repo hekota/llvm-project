@@ -1201,6 +1201,15 @@ struct PerVisibilityBindingChecker {
   }
 };
 
+static CXXMethodDecl *lookupMethod(CXXRecordDecl *Record, StringRef Name,
+                                   StorageClass SC = SC_None) {
+  for (auto *Method : Record->methods()) {
+    if (Method->getStorageClass() == SC && Method->getName() == Name)
+      return Method;
+  }
+  llvm_unreachable("method not found");
+}
+
 } // end anonymous namespace
 
 bool SemaHLSL::handleRootSignatureElements(
@@ -3709,6 +3718,86 @@ static bool initVarDeclWithCtor(Sema &S, VarDecl *VD,
   return true;
 }
 
+CallExpr *SemaHLSL::createResourceInitExpr(
+    QualType ResourceTy, StringRef VarName, HLSLResourceBindingAttr *RBA,
+    HLSLVkBindingAttr *VkBinding, uint32_t ArrayIndex, SourceLocation Loc) {
+
+  ASTContext &AST = SemaRef.getASTContext();
+  uint64_t UIntTySize = AST.getTypeSize(AST.UnsignedIntTy);
+  uint64_t IntTySize = AST.getTypeSize(AST.IntTy);
+
+  // gather resource binding information from attributes
+  std::optional<uint32_t> RegisterSlot;
+  uint32_t SpaceNo = 0;
+  if (VkBinding) {
+    RegisterSlot = VkBinding->getBinding();
+    SpaceNo = VkBinding->getSet();
+  } else if (RBA) {
+    if (RBA->hasRegisterSlot())
+      RegisterSlot = RBA->getSlotNumber();
+    SpaceNo = RBA->getSpaceNumber();
+  }
+
+  // find initialization method and create args
+  CXXRecordDecl *ResourceDecl = ResourceTy->getAsCXXRecordDecl();
+  CXXMethodDecl *CreateMethod = nullptr;
+  llvm::SmallVector<Expr *> Args;
+
+  // resource with explicit binding
+  if (RegisterSlot.has_value()) {
+    CreateMethod = lookupMethod(ResourceDecl, "__createFromBinding", SC_Static);
+    IntegerLiteral *RegSlot = IntegerLiteral::Create(
+        AST, llvm::APInt(UIntTySize, RegisterSlot.value()), AST.UnsignedIntTy,
+        SourceLocation());
+    Args.push_back(RegSlot);
+  } else {
+    // resource with implicit binding
+    CreateMethod =
+        lookupMethod(ResourceDecl, "__createFromImplicitBinding", SC_Static);
+    uint32_t OrderID = (RBA && RBA->hasImplicitBindingOrderID())
+                           ? RBA->getImplicitBindingOrderID()
+                           : getNextImplicitBindingOrderID();
+    IntegerLiteral *OrderId =
+        IntegerLiteral::Create(AST, llvm::APInt(UIntTySize, OrderID),
+                               AST.UnsignedIntTy, SourceLocation());
+    Args.push_back(OrderId);
+  }
+
+  IntegerLiteral *RangeSize = IntegerLiteral::Create(
+      AST, llvm::APInt(IntTySize, 1), AST.IntTy, SourceLocation());
+  IntegerLiteral *Index =
+      IntegerLiteral::Create(AST, llvm::APInt(UIntTySize, ArrayIndex),
+                             AST.UnsignedIntTy, SourceLocation());
+  IntegerLiteral *Space =
+      IntegerLiteral::Create(AST, llvm::APInt(UIntTySize, SpaceNo),
+                             AST.UnsignedIntTy, SourceLocation());
+  StringLiteral *Name = StringLiteral::Create(
+      AST, VarName, StringLiteralKind::Ordinary, false,
+      AST.getStringLiteralArrayType(AST.CharTy.withConst(), VarName.size()),
+      SourceLocation());
+  ImplicitCastExpr *NameCast = ImplicitCastExpr::Create(
+      AST, AST.getPointerType(AST.CharTy.withConst()), CK_ArrayToPointerDecay,
+      Name, nullptr, VK_PRValue, FPOptionsOverride());
+
+  Args.append({Space, RangeSize, Index, NameCast});
+
+  // make sure the template is instantiated and emitted
+  if (!CreateMethod->isDefined() && CreateMethod->isTemplateInstantiation())
+    SemaRef.InstantiateFunctionDefinition(Loc, CreateMethod, true);
+
+  // create CallExpr
+  DeclRefExpr *DRE = DeclRefExpr::Create(
+      AST, NestedNameSpecifierLoc(), SourceLocation(), CreateMethod, false,
+      CreateMethod->getNameInfo(), CreateMethod->getType(), VK_PRValue);
+
+  auto *ImpCast = ImplicitCastExpr::Create(
+      AST, AST.getPointerType(CreateMethod->getType()),
+      CK_FunctionToPointerDecay, DRE, nullptr, VK_PRValue, FPOptionsOverride());
+
+  return CallExpr::Create(AST, ImpCast, Args, ResourceTy, VK_PRValue,
+                          SourceLocation(), FPOptionsOverride());
+}
+
 void SemaHLSL::createResourceRecordCtorArgs(
     const Type *ResourceTy, StringRef VarName, HLSLResourceBindingAttr *RBA,
     HLSLVkBindingAttr *VkBinding, uint32_t ArrayIndex,
@@ -3758,6 +3847,7 @@ void SemaHLSL::createResourceRecordCtorArgs(
   }
 }
 
+#if 0
 bool SemaHLSL::initGlobalResourceDecl(VarDecl *VD) {
   SmallVector<Expr *> Args;
   createResourceRecordCtorArgs(VD->getType().getTypePtr(), VD->getName(),
@@ -3795,6 +3885,86 @@ bool SemaHLSL::initGlobalResourceArrayDecl(VarDecl *VD) {
   ExprResult OneResInit = InitSeq.Perform(SemaRef, Entity, Kind, Args);
   return !OneResInit.isInvalid();
 }
+
+bool SemaHLSL::initGlobalResourceArrayDecl(VarDecl *VD) {
+  assert(VD->getType()->isHLSLResourceRecordArray() &&
+         "expected array of resource records");
+
+  // Individual resources in a resource array are not initialized here. They
+  // are initialized later on during codegen when the individual resources are
+  // accessed. Codegen will emit a call to the resource constructor with the
+  // specified array index. We need to make sure though that the constructor
+  // for the specific resource type is instantiated, so codegen can emit a call
+  // to it when the array element is accessed.
+  SmallVector<Expr *> Args;
+  QualType ResElementTy = VD->getASTContext().getBaseElementType(VD->getType());
+  createResourceRecordCtorArgs(ResElementTy.getTypePtr(), VD->getName(),
+                               VD->getAttr<HLSLResourceBindingAttr>(),
+                               VD->getAttr<HLSLVkBindingAttr>(), 0, Args);
+
+  SourceLocation Loc = VD->getLocation();
+  InitializedEntity Entity =
+      InitializedEntity::InitializeTemporary(ResElementTy);
+  InitializationKind Kind = InitializationKind::CreateDirect(Loc, Loc, Loc);
+  InitializationSequence InitSeq(SemaRef, Entity, Kind, Args);
+  if (InitSeq.Failed())
+    return false;
+
+  // This takes care of instantiating and emitting of the constructor that will
+  // be called from codegen when the array is accessed.
+  ExprResult OneResInit = InitSeq.Perform(SemaRef, Entity, Kind, Args);
+  return !OneResInit.isInvalid();
+}
+
+#else
+
+bool SemaHLSL::initGlobalResourceDecl(VarDecl *VD) {
+  CallExpr *Init = createResourceInitExpr(
+      VD->getType(), VD->getName(), VD->getAttr<HLSLResourceBindingAttr>(),
+      VD->getAttr<HLSLVkBindingAttr>(), 0, VD->getLocation());
+
+  VD->setInit(Init);
+  VD->setInitStyle(VarDecl::CallInit);
+  SemaRef.CheckCompleteVariableDeclaration(VD);
+  return true;
+}
+
+bool SemaHLSL::initGlobalResourceArrayDecl(VarDecl *VD) {
+  assert(VD->getType()->isHLSLResourceRecordArray() &&
+         "expected array of resource records");
+
+  // Individual resources in a resource array are not initialized here. They
+  // are initialized later on during codegen when the individual resources are
+  // accessed. Codegen will emit a call to the static create method with the
+  // specified array index. We just need to make sure here that the create
+  // method for the specific resource type is instantiated.
+
+  // get resource type and decl
+  const Type *ResourceTy = VD->getType().getTypePtr();
+  while (ResourceTy->isArrayType())
+    ResourceTy = ResourceTy->getArrayElementTypeNoTypeQual();
+  CXXRecordDecl *ResourceDecl = ResourceTy->getAsCXXRecordDecl();
+
+  // find bindign attributes
+  auto *RBA = VD->getAttr<HLSLResourceBindingAttr>();
+  auto *VkBinding = VD->getAttr<HLSLVkBindingAttr>();
+  CXXMethodDecl *CreateMethod = nullptr;
+
+  // lookup create method based on explicit vs. implicit binding
+  if (VkBinding || (RBA && RBA->hasRegisterSlot()))
+    CreateMethod = lookupMethod(ResourceDecl, "__createFromBinding", SC_Static);
+  else
+    CreateMethod =
+        lookupMethod(ResourceDecl, "__createFromImplicitBinding", SC_Static);
+
+  // make sure it is instantiated & emitted
+  if (!CreateMethod->isDefined() && CreateMethod->isTemplateInstantiation())
+    SemaRef.InstantiateFunctionDefinition(VD->getLocation(), CreateMethod,
+                                          true);
+  return CreateMethod;
+}
+
+#endif
 
 // Returns true if the initialization has been handled.
 // Returns false to use default initialization.
