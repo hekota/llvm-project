@@ -18,9 +18,9 @@
 #include "clang/AST/Attr.h"
 #include "clang/AST/Attrs.inc"
 #include "clang/AST/DeclBase.h"
+#include "clang/AST/DeclCXX.h"
+#include "clang/Basic/IdentifierTable.h"
 #include "clang/Basic/TargetInfo.h"
-#include "clang/Support/Compiler.h"
-#include "llvm/Support/raw_ostream.h"
 
 namespace clang {
 
@@ -87,6 +87,36 @@ struct ResourceBindingAttrs {
     assert(hasCounterImplicitOrderID());
     return RegBinding->getImplicitCounterBindingOrderID();
   }
+};
+
+class EmbeddedResourceNameBuilder {
+  llvm::SmallString<64> Name;
+  llvm::SmallVector<unsigned> Offsets;
+
+  inline static constexpr std::string_view BaseDelim = "::";
+  inline static constexpr std::string_view FieldDelim = ".";
+
+public:
+  EmbeddedResourceNameBuilder(llvm::StringRef BaseName) : Name(BaseName) {}
+  EmbeddedResourceNameBuilder() : Name("") {}
+
+  void pushName(llvm::StringRef N) { pushName(N, FieldDelim); }
+
+  void pushBaseName(llvm::StringRef N) { pushName(N, BaseDelim); }
+
+  void pushBaseNameHierarchy(CXXRecordDecl *DerivedRD, CXXRecordDecl *BaseRD);
+
+  void pop() {
+    assert(!Offsets.empty() && "no name to pop");
+    Name.resize(Offsets.pop_back_val());
+  }
+
+  IdentifierInfo *getNameAsIdentifier(ASTContext &AST) const {
+    return &AST.Idents.get(Name);
+  }
+
+private:
+  void pushName(llvm::StringRef N, llvm::StringRef Delim);
 };
 
 } // namespace hlsl

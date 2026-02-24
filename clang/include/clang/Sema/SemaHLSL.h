@@ -15,6 +15,7 @@
 
 #include "clang/AST/ASTFwd.h"
 #include "clang/AST/Attr.h"
+#include "clang/AST/Expr.h"
 #include "clang/AST/Type.h"
 #include "clang/AST/TypeLoc.h"
 #include "clang/Basic/DiagnosticSema.h"
@@ -36,6 +37,9 @@ class Scope;
 class VarDecl;
 
 namespace hlsl {
+
+class StructBindingContext;
+class EmbeddedResourceNameBuilder;
 
 // Introduce a wrapper struct around the underlying RootElement. This structure
 // will retain extra clang diagnostic information that is not available in llvm.
@@ -131,6 +135,7 @@ public:
   void ActOnVariableDeclarator(VarDecl *VD);
   bool ActOnUninitializedVarDecl(VarDecl *D);
   void ActOnEndOfTranslationUnit(TranslationUnitDecl *TU);
+
   void CheckEntryPoint(FunctionDecl *FD);
   bool CheckResourceBinOp(BinaryOperatorKind Opc, Expr *LHSExpr, Expr *RHSExpr,
                           SourceLocation Loc);
@@ -215,6 +220,10 @@ public:
   bool transformInitList(const InitializedEntity &Entity, InitListExpr *Init);
   bool handleInitialization(VarDecl *VDecl, Expr *&Init);
   void deduceAddressSpace(VarDecl *Decl);
+
+  uint32_t getNextImplicitBindingOrderID() {
+    return ImplicitBindingNextOrderID++;
+  }
 
 private:
   // HLSL resource type attributes need to be processed all at once.
@@ -303,12 +312,21 @@ private:
       const Attr *A, llvm::Triple::EnvironmentType Stage, IOType CurrentIOType,
       std::initializer_list<SemanticStageInfo> AllowedStages);
 
-  uint32_t getNextImplicitBindingOrderID() {
-    return ImplicitBindingNextOrderID++;
-  }
-
   bool initGlobalResourceDecl(VarDecl *VD);
   bool initGlobalResourceArrayDecl(VarDecl *VD);
+
+  void handleGlobalStructWithResources(VarDecl *VD);
+  void handleStructWithResources(VarDecl *ParentVD, const CXXRecordDecl *RD,
+                                 hlsl::EmbeddedResourceNameBuilder &NameBuilder,
+                                 hlsl::StructBindingContext &BindingCtx);
+  void
+  handleResourceFieldsInStruct(VarDecl *ParentVD, const CXXRecordDecl *RD,
+                               hlsl::EmbeddedResourceNameBuilder &NameBuilder,
+                               hlsl::StructBindingContext &BindingCtx);
+  void
+  createGlobalResourceDeclForStruct(VarDecl *ParentVD, SourceLocation Loc,
+                                    IdentifierInfo *Id, QualType ResTy,
+                                    hlsl::StructBindingContext &BindingCtx);
 };
 
 } // namespace clang

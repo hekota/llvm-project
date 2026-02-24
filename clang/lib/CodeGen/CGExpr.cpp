@@ -33,6 +33,7 @@
 #include "clang/AST/NSAPI.h"
 #include "clang/AST/ParentMapContext.h"
 #include "clang/AST/StmtVisitor.h"
+#include "clang/AST/TypeBase.h"
 #include "clang/Basic/Builtins.h"
 #include "clang/Basic/CodeGenOptions.h"
 #include "clang/Basic/Module.h"
@@ -5328,10 +5329,14 @@ LValue CodeGenFunction::EmitMemberExpr(const MemberExpr *E) {
     EmitIgnoredExpr(E->getBase());
     return EmitDeclRefLValue(DRE);
   }
-  if (getLangOpts().HLSL &&
-      E->getType().getAddressSpace() == LangAS::hlsl_constant) {
+  if (getLangOpts().HLSL) {
+    QualType QT = E->getType();
     // We have an HLSL buffer - emit using HLSL's layout rules.
-    return CGM.getHLSLRuntime().emitBufferMemberExpr(*this, E);
+    if (E->getType().getAddressSpace() == LangAS::hlsl_constant)
+      return CGM.getHLSLRuntime().emitBufferMemberExpr(*this, E);
+    // Resource member of a struct/class
+    if (QT->isHLSLResourceRecord())
+      return CGM.getHLSLRuntime().emitResourceMemberExpr(*this, E);
   }
 
   Expr *BaseExpr = E->getBase();

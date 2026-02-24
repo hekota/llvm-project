@@ -1723,7 +1723,9 @@ ExprResult Sema::ActOnMemberAccessExpr(Scope *S, Expr *Base,
   if (!Res.isInvalid() && isa<MemberExpr>(Res.get()))
     CheckMemberAccessOfNoDeref(cast<MemberExpr>(Res.get()));
 
-  return Res;
+  if (getLangOpts().HLSL)
+
+    return Res;
 }
 
 void Sema::CheckMemberAccessOfNoDeref(const MemberExpr *E) {
@@ -1794,6 +1796,12 @@ Sema::BuildFieldReferenceExpr(Expr *BaseExpr, bool IsArrow,
     // CVR attributes from the base are picked up by members,
     // except that 'mutable' members don't pick up 'const'.
     if (Field->isMutable()) BaseQuals.removeConst();
+
+    // HLSL resource types do not pick up address space qualifiers from the
+    // base.
+    if (getLangOpts().HLSL && (MemberType->isHLSLResourceRecord() ||
+                               MemberType->isHLSLResourceRecordArray()))
+      BaseQuals.removeAddressSpace();
 
     Qualifiers MemberQuals =
         Context.getCanonicalType(MemberType).getQualifiers();
