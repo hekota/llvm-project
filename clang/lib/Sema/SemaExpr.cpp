@@ -9152,7 +9152,7 @@ static QualType computeConditionalNullability(QualType ResTy, bool IsBin,
     return ResTy;
 
   auto GetNullability = [](QualType Ty) {
-    std::optional<NullabilityKind> Kind = Ty->getNullability();
+    NullabilityKindOrNone Kind = Ty->getNullability();
     if (Kind) {
       // For our purposes, treat _Nullable_result as _Nullable.
       if (*Kind == NullabilityKind::NullableResult)
@@ -17602,8 +17602,9 @@ bool Sema::DiagnoseAssignmentResult(AssignConvertType ConvTy,
     }
     break;
   case AssignConvertType::IncompatiblePointerDiscardsQualifiers: {
-    // Perform array-to-pointer decay if necessary.
-    if (SrcType->isArrayType()) SrcType = Context.getArrayDecayedType(SrcType);
+    // Perform decay if necessary.
+    if (SrcType->canDecayToPointerType())
+      SrcType = Context.getDecayedType(SrcType);
 
     isInvalid = true;
 
@@ -17716,6 +17717,11 @@ bool Sema::DiagnoseAssignmentResult(AssignConvertType ConvTy,
   case AssignConvertType::CompatibleOBTDiscards:
     return false;
   case AssignConvertType::IncompatibleOBTKinds: {
+    assert(!SrcType->isFunctionType() &&
+           "Unexpected function type found in IncompatibleOBTKinds assignment");
+    if (SrcType->canDecayToPointerType())
+      SrcType = Context.getDecayedType(SrcType);
+
     auto getOBTKindName = [](QualType Ty) -> StringRef {
       if (Ty->isPointerType())
         Ty = Ty->getPointeeType();
