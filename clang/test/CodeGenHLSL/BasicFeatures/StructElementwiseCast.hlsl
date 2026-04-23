@@ -32,9 +32,7 @@ void call0() {
 // CHECK-NEXT:    [[A:%.*]] = alloca <2 x i32>, align 4
 // CHECK-NEXT:    [[S:%.*]] = alloca [[STRUCT_S:%.*]], align 1
 // CHECK-NEXT:    [[REF_TMP:%.*]] = alloca [[STRUCT_S]], align 1
-// CHECK-NEXT:    [[REF_TMP4:%.*]] = alloca [[STRUCT_S]], align 1
 // CHECK-NEXT:    store <2 x i32> <i32 1, i32 2>, ptr [[A]], align 4
-// CHECK-NEXT:    [[X:%.*]] = getelementptr inbounds nuw [[STRUCT_S]], ptr [[S]], i32 0, i32 0
 // CHECK-NEXT:    [[TMP0:%.*]] = load <2 x i32>, ptr [[A]], align 4
 // CHECK-NEXT:    [[GEP:%.*]] = getelementptr inbounds [[STRUCT_S]], ptr [[REF_TMP]], i32 0, i32 0
 // CHECK-NEXT:    [[GEP1:%.*]] = getelementptr inbounds [[STRUCT_S]], ptr [[REF_TMP]], i32 0, i32 1
@@ -43,21 +41,14 @@ void call0() {
 // CHECK-NEXT:    [[VEC_LOAD2:%.*]] = extractelement <2 x i32> [[TMP0]], i64 1
 // CHECK-NEXT:    [[CONV:%.*]] = sitofp i32 [[VEC_LOAD2]] to float
 // CHECK-NEXT:    store float [[CONV]], ptr [[GEP1]], align 4
+// CHECK-NEXT:    [[X:%.*]] = getelementptr inbounds nuw [[STRUCT_S]], ptr [[S]], i32 0, i32 0
 // CHECK-NEXT:    [[X3:%.*]] = getelementptr inbounds nuw [[STRUCT_S]], ptr [[REF_TMP]], i32 0, i32 0
 // CHECK-NEXT:    [[TMP1:%.*]] = load i32, ptr [[X3]], align 1
 // CHECK-NEXT:    store i32 [[TMP1]], ptr [[X]], align 1
 // CHECK-NEXT:    [[Y:%.*]] = getelementptr inbounds nuw [[STRUCT_S]], ptr [[S]], i32 0, i32 1
-// CHECK-NEXT:    [[TMP2:%.*]] = load <2 x i32>, ptr [[A]], align 4
-// CHECK-NEXT:    [[GEP5:%.*]] = getelementptr inbounds [[STRUCT_S]], ptr [[REF_TMP4]], i32 0, i32 0
-// CHECK-NEXT:    [[GEP6:%.*]] = getelementptr inbounds [[STRUCT_S]], ptr [[REF_TMP4]], i32 0, i32 1
-// CHECK-NEXT:    [[VEC_LOAD7:%.*]] = extractelement <2 x i32> [[TMP2]], i64 0
-// CHECK-NEXT:    store i32 [[VEC_LOAD7]], ptr [[GEP5]], align 4
-// CHECK-NEXT:    [[VEC_LOAD8:%.*]] = extractelement <2 x i32> [[TMP2]], i64 1
-// CHECK-NEXT:    [[CONV9:%.*]] = sitofp i32 [[VEC_LOAD8]] to float
-// CHECK-NEXT:    store float [[CONV9]], ptr [[GEP6]], align 4
-// CHECK-NEXT:    [[Y10:%.*]] = getelementptr inbounds nuw [[STRUCT_S]], ptr [[REF_TMP4]], i32 0, i32 1
-// CHECK-NEXT:    [[TMP3:%.*]] = load float, ptr [[Y10]], align 1
-// CHECK-NEXT:    store float [[TMP3]], ptr [[Y]], align 1
+// CHECK-NEXT:    [[Y4:%.*]] = getelementptr inbounds nuw [[STRUCT_S]], ptr [[REF_TMP]], i32 0, i32 1
+// CHECK-NEXT:    [[TMP2:%.*]] = load float, ptr [[Y4]], align 1
+// CHECK-NEXT:    store float [[TMP2]], ptr [[Y]], align 1
 // CHECK-NEXT:    ret void
 //
 void call1() {
@@ -74,10 +65,7 @@ void call1() {
 // CHECK-NEXT:    [[S:%.*]] = alloca [[STRUCT_S:%.*]], align 1
 // CHECK-NEXT:    [[REF_TMP:%.*]] = alloca [[STRUCT_S]], align 1
 // CHECK-NEXT:    [[AGG_TEMP:%.*]] = alloca [2 x i32], align 4
-// CHECK-NEXT:    [[REF_TMP5:%.*]] = alloca [[STRUCT_S]], align 1
-// CHECK-NEXT:    [[AGG_TEMP6:%.*]] = alloca [2 x i32], align 4
 // CHECK-NEXT:    call void @llvm.memcpy.p0.p0.i32(ptr align 4 [[A]], ptr align 4 @__const._Z5call2v.A, i32 8, i1 false)
-// CHECK-NEXT:    [[X:%.*]] = getelementptr inbounds nuw [[STRUCT_S]], ptr [[S]], i32 0, i32 0
 // CHECK-NEXT:    call void @llvm.memcpy.p0.p0.i32(ptr align 4 [[AGG_TEMP]], ptr align 4 [[A]], i32 8, i1 false)
 // CHECK-NEXT:    [[GEP:%.*]] = getelementptr inbounds [[STRUCT_S]], ptr [[REF_TMP]], i32 0, i32 0
 // CHECK-NEXT:    [[GEP1:%.*]] = getelementptr inbounds [[STRUCT_S]], ptr [[REF_TMP]], i32 0, i32 1
@@ -88,23 +76,14 @@ void call1() {
 // CHECK-NEXT:    [[TMP1:%.*]] = load i32, ptr [[GEP3]], align 4
 // CHECK-NEXT:    [[CONV:%.*]] = sitofp i32 [[TMP1]] to float
 // CHECK-NEXT:    store float [[CONV]], ptr [[GEP1]], align 4
+// CHECK-NEXT:    [[X:%.*]] = getelementptr inbounds nuw [[STRUCT_S]], ptr [[S]], i32 0, i32 0
 // CHECK-NEXT:    [[X4:%.*]] = getelementptr inbounds nuw [[STRUCT_S]], ptr [[REF_TMP]], i32 0, i32 0
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[X4]], align 1
 // CHECK-NEXT:    store i32 [[TMP2]], ptr [[X]], align 1
 // CHECK-NEXT:    [[Y:%.*]] = getelementptr inbounds nuw [[STRUCT_S]], ptr [[S]], i32 0, i32 1
-// CHECK-NEXT:    call void @llvm.memcpy.p0.p0.i32(ptr align 4 [[AGG_TEMP6]], ptr align 4 [[A]], i32 8, i1 false)
-// CHECK-NEXT:    [[GEP7:%.*]] = getelementptr inbounds [[STRUCT_S]], ptr [[REF_TMP5]], i32 0, i32 0
-// CHECK-NEXT:    [[GEP8:%.*]] = getelementptr inbounds [[STRUCT_S]], ptr [[REF_TMP5]], i32 0, i32 1
-// CHECK-NEXT:    [[GEP9:%.*]] = getelementptr inbounds [2 x i32], ptr [[AGG_TEMP6]], i32 0, i32 0
-// CHECK-NEXT:    [[GEP10:%.*]] = getelementptr inbounds [2 x i32], ptr [[AGG_TEMP6]], i32 0, i32 1
-// CHECK-NEXT:    [[TMP3:%.*]] = load i32, ptr [[GEP9]], align 4
-// CHECK-NEXT:    store i32 [[TMP3]], ptr [[GEP7]], align 4
-// CHECK-NEXT:    [[TMP4:%.*]] = load i32, ptr [[GEP10]], align 4
-// CHECK-NEXT:    [[CONV11:%.*]] = sitofp i32 [[TMP4]] to float
-// CHECK-NEXT:    store float [[CONV11]], ptr [[GEP8]], align 4
-// CHECK-NEXT:    [[Y12:%.*]] = getelementptr inbounds nuw [[STRUCT_S]], ptr [[REF_TMP5]], i32 0, i32 1
-// CHECK-NEXT:    [[TMP5:%.*]] = load float, ptr [[Y12]], align 1
-// CHECK-NEXT:    store float [[TMP5]], ptr [[Y]], align 1
+// CHECK-NEXT:    [[Y5:%.*]] = getelementptr inbounds nuw [[STRUCT_S]], ptr [[REF_TMP]], i32 0, i32 1
+// CHECK-NEXT:    [[TMP3:%.*]] = load float, ptr [[Y5]], align 1
+// CHECK-NEXT:    store float [[TMP3]], ptr [[Y]], align 1
 // CHECK-NEXT:    ret void
 //
 void call2() {
@@ -129,10 +108,7 @@ struct R {
 // CHECK-NEXT:    [[S:%.*]] = alloca [[STRUCT_S:%.*]], align 1
 // CHECK-NEXT:    [[REF_TMP:%.*]] = alloca [[STRUCT_S]], align 1
 // CHECK-NEXT:    [[AGG_TEMP:%.*]] = alloca [[STRUCT_R]], align 1
-// CHECK-NEXT:    [[REF_TMP5:%.*]] = alloca [[STRUCT_S]], align 1
-// CHECK-NEXT:    [[AGG_TEMP6:%.*]] = alloca [[STRUCT_R]], align 1
 // CHECK-NEXT:    call void @llvm.memcpy.p0.p0.i32(ptr align 1 [[R]], ptr align 1 @__const._Z5call6v.r, i32 8, i1 false)
-// CHECK-NEXT:    [[X:%.*]] = getelementptr inbounds nuw [[STRUCT_S]], ptr [[S]], i32 0, i32 0
 // CHECK-NEXT:    call void @llvm.memcpy.p0.p0.i32(ptr align 1 [[AGG_TEMP]], ptr align 1 [[R]], i32 8, i1 false)
 // CHECK-NEXT:    [[GEP:%.*]] = getelementptr inbounds [[STRUCT_S]], ptr [[REF_TMP]], i32 0, i32 0
 // CHECK-NEXT:    [[GEP1:%.*]] = getelementptr inbounds [[STRUCT_S]], ptr [[REF_TMP]], i32 0, i32 1
@@ -142,22 +118,14 @@ struct R {
 // CHECK-NEXT:    store i32 [[TMP0]], ptr [[GEP]], align 4
 // CHECK-NEXT:    [[TMP1:%.*]] = load float, ptr [[GEP3]], align 4
 // CHECK-NEXT:    store float [[TMP1]], ptr [[GEP1]], align 4
+// CHECK-NEXT:    [[X:%.*]] = getelementptr inbounds nuw [[STRUCT_S]], ptr [[S]], i32 0, i32 0
 // CHECK-NEXT:    [[X4:%.*]] = getelementptr inbounds nuw [[STRUCT_S]], ptr [[REF_TMP]], i32 0, i32 0
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[X4]], align 1
 // CHECK-NEXT:    store i32 [[TMP2]], ptr [[X]], align 1
 // CHECK-NEXT:    [[Y:%.*]] = getelementptr inbounds nuw [[STRUCT_S]], ptr [[S]], i32 0, i32 1
-// CHECK-NEXT:    call void @llvm.memcpy.p0.p0.i32(ptr align 1 [[AGG_TEMP6]], ptr align 1 [[R]], i32 8, i1 false)
-// CHECK-NEXT:    [[GEP7:%.*]] = getelementptr inbounds [[STRUCT_S]], ptr [[REF_TMP5]], i32 0, i32 0
-// CHECK-NEXT:    [[GEP8:%.*]] = getelementptr inbounds [[STRUCT_S]], ptr [[REF_TMP5]], i32 0, i32 1
-// CHECK-NEXT:    [[GEP9:%.*]] = getelementptr inbounds [[STRUCT_R]], ptr [[AGG_TEMP6]], i32 0, i32 0, i32 0
-// CHECK-NEXT:    [[GEP10:%.*]] = getelementptr inbounds [[STRUCT_R]], ptr [[AGG_TEMP6]], i32 0, i32 1
-// CHECK-NEXT:    [[TMP3:%.*]] = load i32, ptr [[GEP9]], align 4
-// CHECK-NEXT:    store i32 [[TMP3]], ptr [[GEP7]], align 4
-// CHECK-NEXT:    [[TMP4:%.*]] = load float, ptr [[GEP10]], align 4
-// CHECK-NEXT:    store float [[TMP4]], ptr [[GEP8]], align 4
-// CHECK-NEXT:    [[Y11:%.*]] = getelementptr inbounds nuw [[STRUCT_S]], ptr [[REF_TMP5]], i32 0, i32 1
-// CHECK-NEXT:    [[TMP5:%.*]] = load float, ptr [[Y11]], align 1
-// CHECK-NEXT:    store float [[TMP5]], ptr [[Y]], align 1
+// CHECK-NEXT:    [[Y5:%.*]] = getelementptr inbounds nuw [[STRUCT_S]], ptr [[REF_TMP]], i32 0, i32 1
+// CHECK-NEXT:    [[TMP3:%.*]] = load float, ptr [[Y5]], align 1
+// CHECK-NEXT:    store float [[TMP3]], ptr [[Y]], align 1
 // CHECK-NEXT:    ret void
 //
 void call6() {
@@ -166,6 +134,7 @@ void call6() {
 }
 
 // nested struct from array?
+//
 // CHECK-LABEL: define hidden void @_Z5call7v(
 // CHECK-SAME: ) #[[ATTR0]] {
 // CHECK-NEXT:  [[ENTRY:.*:]]
@@ -173,11 +142,7 @@ void call6() {
 // CHECK-NEXT:    [[R:%.*]] = alloca [[STRUCT_R:%.*]], align 1
 // CHECK-NEXT:    [[REF_TMP:%.*]] = alloca [[STRUCT_R]], align 1
 // CHECK-NEXT:    [[AGG_TEMP:%.*]] = alloca [2 x i32], align 4
-// CHECK-NEXT:    [[REF_TMP6:%.*]] = alloca [[STRUCT_R]], align 1
-// CHECK-NEXT:    [[AGG_TEMP7:%.*]] = alloca [2 x i32], align 4
 // CHECK-NEXT:    call void @llvm.memcpy.p0.p0.i32(ptr align 4 [[A]], ptr align 4 @__const._Z5call7v.A, i32 8, i1 false)
-// CHECK-NEXT:    [[Q:%.*]] = getelementptr inbounds nuw [[STRUCT_R]], ptr [[R]], i32 0, i32 0
-// CHECK-NEXT:    [[Z:%.*]] = getelementptr inbounds nuw [[STRUCT_Q:%.*]], ptr [[Q]], i32 0, i32 0
 // CHECK-NEXT:    call void @llvm.memcpy.p0.p0.i32(ptr align 4 [[AGG_TEMP]], ptr align 4 [[A]], i32 8, i1 false)
 // CHECK-NEXT:    [[GEP:%.*]] = getelementptr inbounds [[STRUCT_R]], ptr [[REF_TMP]], i32 0, i32 0, i32 0
 // CHECK-NEXT:    [[GEP1:%.*]] = getelementptr inbounds [[STRUCT_R]], ptr [[REF_TMP]], i32 0, i32 1
@@ -188,24 +153,16 @@ void call6() {
 // CHECK-NEXT:    [[TMP1:%.*]] = load i32, ptr [[GEP3]], align 4
 // CHECK-NEXT:    [[CONV:%.*]] = sitofp i32 [[TMP1]] to float
 // CHECK-NEXT:    store float [[CONV]], ptr [[GEP1]], align 4
+// CHECK-NEXT:    [[Q:%.*]] = getelementptr inbounds nuw [[STRUCT_R]], ptr [[R]], i32 0, i32 0
+// CHECK-NEXT:    [[Z:%.*]] = getelementptr inbounds nuw [[STRUCT_Q:%.*]], ptr [[Q]], i32 0, i32 0
 // CHECK-NEXT:    [[Q4:%.*]] = getelementptr inbounds nuw [[STRUCT_R]], ptr [[REF_TMP]], i32 0, i32 0
 // CHECK-NEXT:    [[Z5:%.*]] = getelementptr inbounds nuw [[STRUCT_Q]], ptr [[Q4]], i32 0, i32 0
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[Z5]], align 1
 // CHECK-NEXT:    store i32 [[TMP2]], ptr [[Z]], align 1
 // CHECK-NEXT:    [[F:%.*]] = getelementptr inbounds nuw [[STRUCT_R]], ptr [[R]], i32 0, i32 1
-// CHECK-NEXT:    call void @llvm.memcpy.p0.p0.i32(ptr align 4 [[AGG_TEMP7]], ptr align 4 [[A]], i32 8, i1 false)
-// CHECK-NEXT:    [[GEP8:%.*]] = getelementptr inbounds [[STRUCT_R]], ptr [[REF_TMP6]], i32 0, i32 0, i32 0
-// CHECK-NEXT:    [[GEP9:%.*]] = getelementptr inbounds [[STRUCT_R]], ptr [[REF_TMP6]], i32 0, i32 1
-// CHECK-NEXT:    [[GEP10:%.*]] = getelementptr inbounds [2 x i32], ptr [[AGG_TEMP7]], i32 0, i32 0
-// CHECK-NEXT:    [[GEP11:%.*]] = getelementptr inbounds [2 x i32], ptr [[AGG_TEMP7]], i32 0, i32 1
-// CHECK-NEXT:    [[TMP3:%.*]] = load i32, ptr [[GEP10]], align 4
-// CHECK-NEXT:    store i32 [[TMP3]], ptr [[GEP8]], align 4
-// CHECK-NEXT:    [[TMP4:%.*]] = load i32, ptr [[GEP11]], align 4
-// CHECK-NEXT:    [[CONV12:%.*]] = sitofp i32 [[TMP4]] to float
-// CHECK-NEXT:    store float [[CONV12]], ptr [[GEP9]], align 4
-// CHECK-NEXT:    [[F13:%.*]] = getelementptr inbounds nuw [[STRUCT_R]], ptr [[REF_TMP6]], i32 0, i32 1
-// CHECK-NEXT:    [[TMP5:%.*]] = load float, ptr [[F13]], align 1
-// CHECK-NEXT:    store float [[TMP5]], ptr [[F]], align 1
+// CHECK-NEXT:    [[F6:%.*]] = getelementptr inbounds nuw [[STRUCT_R]], ptr [[REF_TMP]], i32 0, i32 1
+// CHECK-NEXT:    [[TMP3:%.*]] = load float, ptr [[F6]], align 1
+// CHECK-NEXT:    store float [[TMP3]], ptr [[F]], align 1
 // CHECK-NEXT:    ret void
 //
 void call7() {
@@ -227,10 +184,7 @@ struct T {
 // CHECK-NEXT:    [[S:%.*]] = alloca [[STRUCT_S:%.*]], align 1
 // CHECK-NEXT:    [[REF_TMP:%.*]] = alloca [[STRUCT_S]], align 1
 // CHECK-NEXT:    [[AGG_TEMP:%.*]] = alloca [[STRUCT_T]], align 1
-// CHECK-NEXT:    [[REF_TMP6:%.*]] = alloca [[STRUCT_S]], align 1
-// CHECK-NEXT:    [[AGG_TEMP7:%.*]] = alloca [[STRUCT_T]], align 1
 // CHECK-NEXT:    call void @llvm.memcpy.p0.p0.i32(ptr align 1 [[T]], ptr align 1 @__const._Z5call8v.t, i32 12, i1 false)
-// CHECK-NEXT:    [[X:%.*]] = getelementptr inbounds nuw [[STRUCT_S]], ptr [[S]], i32 0, i32 0
 // CHECK-NEXT:    call void @llvm.memcpy.p0.p0.i32(ptr align 1 [[AGG_TEMP]], ptr align 1 [[T]], i32 12, i1 false)
 // CHECK-NEXT:    [[GEP:%.*]] = getelementptr inbounds [[STRUCT_S]], ptr [[REF_TMP]], i32 0, i32 0
 // CHECK-NEXT:    [[GEP1:%.*]] = getelementptr inbounds [[STRUCT_S]], ptr [[REF_TMP]], i32 0, i32 1
@@ -242,24 +196,14 @@ struct T {
 // CHECK-NEXT:    [[TMP1:%.*]] = load i32, ptr [[GEP3]], align 4
 // CHECK-NEXT:    [[CONV:%.*]] = sitofp i32 [[TMP1]] to float
 // CHECK-NEXT:    store float [[CONV]], ptr [[GEP1]], align 4
+// CHECK-NEXT:    [[X:%.*]] = getelementptr inbounds nuw [[STRUCT_S]], ptr [[S]], i32 0, i32 0
 // CHECK-NEXT:    [[X5:%.*]] = getelementptr inbounds nuw [[STRUCT_S]], ptr [[REF_TMP]], i32 0, i32 0
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[X5]], align 1
 // CHECK-NEXT:    store i32 [[TMP2]], ptr [[X]], align 1
 // CHECK-NEXT:    [[Y:%.*]] = getelementptr inbounds nuw [[STRUCT_S]], ptr [[S]], i32 0, i32 1
-// CHECK-NEXT:    call void @llvm.memcpy.p0.p0.i32(ptr align 1 [[AGG_TEMP7]], ptr align 1 [[T]], i32 12, i1 false)
-// CHECK-NEXT:    [[GEP8:%.*]] = getelementptr inbounds [[STRUCT_S]], ptr [[REF_TMP6]], i32 0, i32 0
-// CHECK-NEXT:    [[GEP9:%.*]] = getelementptr inbounds [[STRUCT_S]], ptr [[REF_TMP6]], i32 0, i32 1
-// CHECK-NEXT:    [[GEP10:%.*]] = getelementptr inbounds [[STRUCT_T]], ptr [[AGG_TEMP7]], i32 0, i32 0
-// CHECK-NEXT:    [[GEP11:%.*]] = getelementptr inbounds [[STRUCT_T]], ptr [[AGG_TEMP7]], i32 0, i32 1
-// CHECK-NEXT:    [[GEP12:%.*]] = getelementptr inbounds [[STRUCT_T]], ptr [[AGG_TEMP7]], i32 0, i32 2
-// CHECK-NEXT:    [[TMP3:%.*]] = load i32, ptr [[GEP10]], align 4
-// CHECK-NEXT:    store i32 [[TMP3]], ptr [[GEP8]], align 4
-// CHECK-NEXT:    [[TMP4:%.*]] = load i32, ptr [[GEP11]], align 4
-// CHECK-NEXT:    [[CONV13:%.*]] = sitofp i32 [[TMP4]] to float
-// CHECK-NEXT:    store float [[CONV13]], ptr [[GEP9]], align 4
-// CHECK-NEXT:    [[Y14:%.*]] = getelementptr inbounds nuw [[STRUCT_S]], ptr [[REF_TMP6]], i32 0, i32 1
-// CHECK-NEXT:    [[TMP5:%.*]] = load float, ptr [[Y14]], align 1
-// CHECK-NEXT:    store float [[TMP5]], ptr [[Y]], align 1
+// CHECK-NEXT:    [[Y6:%.*]] = getelementptr inbounds nuw [[STRUCT_S]], ptr [[REF_TMP]], i32 0, i32 1
+// CHECK-NEXT:    [[TMP3:%.*]] = load float, ptr [[Y6]], align 1
+// CHECK-NEXT:    store float [[TMP3]], ptr [[Y]], align 1
 // CHECK-NEXT:    ret void
 //
 void call8() {
@@ -307,118 +251,52 @@ void call9(Derived D) {
 // CHECK-NEXT:    [[I_ADDR:%.*]] = alloca <4 x i32>, align 4
 // CHECK-NEXT:    [[D:%.*]] = alloca [[STRUCT_DERIVED:%.*]], align 1
 // CHECK-NEXT:    [[REF_TMP:%.*]] = alloca [[STRUCT_DERIVED]], align 1
-// CHECK-NEXT:    [[REF_TMP11:%.*]] = alloca [[STRUCT_DERIVED]], align 1
-// CHECK-NEXT:    [[REF_TMP33:%.*]] = alloca [[STRUCT_DERIVED]], align 1
-// CHECK-NEXT:    [[REF_TMP50:%.*]] = alloca [[STRUCT_DERIVED]], align 1
 // CHECK-NEXT:    store <4 x i32> [[I]], ptr [[I_ADDR]], align 4
-// CHECK-NEXT:    [[D1:%.*]] = getelementptr inbounds nuw [[STRUCT_BFIELDS:%.*]], ptr [[D]], i32 0, i32 0
 // CHECK-NEXT:    [[TMP0:%.*]] = load <4 x i32>, ptr [[I_ADDR]], align 4
 // CHECK-NEXT:    [[GEP:%.*]] = getelementptr inbounds [[STRUCT_DERIVED]], ptr [[REF_TMP]], i32 0, i32 0
-// CHECK-NEXT:    [[E:%.*]] = getelementptr inbounds nuw [[STRUCT_BFIELDS]], ptr [[GEP]], i32 0, i32 1
-// CHECK-NEXT:    [[GEP2:%.*]] = getelementptr inbounds [[STRUCT_DERIVED]], ptr [[REF_TMP]], i32 0, i32 0, i32 0
-// CHECK-NEXT:    [[GEP3:%.*]] = getelementptr inbounds [[STRUCT_DERIVED]], ptr [[REF_TMP]], i32 0, i32 0, i32 2
-// CHECK-NEXT:    [[GEP4:%.*]] = getelementptr inbounds [[STRUCT_DERIVED]], ptr [[REF_TMP]], i32 0, i32 1
+// CHECK-NEXT:    [[E:%.*]] = getelementptr inbounds nuw [[STRUCT_BFIELDS:%.*]], ptr [[GEP]], i32 0, i32 1
+// CHECK-NEXT:    [[GEP1:%.*]] = getelementptr inbounds [[STRUCT_DERIVED]], ptr [[REF_TMP]], i32 0, i32 0, i32 0
+// CHECK-NEXT:    [[GEP2:%.*]] = getelementptr inbounds [[STRUCT_DERIVED]], ptr [[REF_TMP]], i32 0, i32 0, i32 2
+// CHECK-NEXT:    [[GEP3:%.*]] = getelementptr inbounds [[STRUCT_DERIVED]], ptr [[REF_TMP]], i32 0, i32 1
 // CHECK-NEXT:    [[VEC_LOAD:%.*]] = extractelement <4 x i32> [[TMP0]], i64 0
 // CHECK-NEXT:    [[CONV:%.*]] = sitofp i32 [[VEC_LOAD]] to double
-// CHECK-NEXT:    store double [[CONV]], ptr [[GEP2]], align 8
-// CHECK-NEXT:    [[VEC_LOAD5:%.*]] = extractelement <4 x i32> [[TMP0]], i64 1
-// CHECK-NEXT:    [[TMP1:%.*]] = trunc i32 [[VEC_LOAD5]] to i24
+// CHECK-NEXT:    store double [[CONV]], ptr [[GEP1]], align 8
+// CHECK-NEXT:    [[VEC_LOAD4:%.*]] = extractelement <4 x i32> [[TMP0]], i64 1
+// CHECK-NEXT:    [[TMP1:%.*]] = trunc i32 [[VEC_LOAD4]] to i24
 // CHECK-NEXT:    [[BF_LOAD:%.*]] = load i24, ptr [[E]], align 1
 // CHECK-NEXT:    [[BF_VALUE:%.*]] = and i24 [[TMP1]], 32767
 // CHECK-NEXT:    [[BF_CLEAR:%.*]] = and i24 [[BF_LOAD]], -32768
 // CHECK-NEXT:    [[BF_SET:%.*]] = or i24 [[BF_CLEAR]], [[BF_VALUE]]
 // CHECK-NEXT:    store i24 [[BF_SET]], ptr [[E]], align 1
-// CHECK-NEXT:    [[VEC_LOAD6:%.*]] = extractelement <4 x i32> [[TMP0]], i64 2
-// CHECK-NEXT:    [[CONV7:%.*]] = sitofp i32 [[VEC_LOAD6]] to float
-// CHECK-NEXT:    store float [[CONV7]], ptr [[GEP3]], align 4
-// CHECK-NEXT:    [[VEC_LOAD8:%.*]] = extractelement <4 x i32> [[TMP0]], i64 3
-// CHECK-NEXT:    store i32 [[VEC_LOAD8]], ptr [[GEP4]], align 4
+// CHECK-NEXT:    [[VEC_LOAD5:%.*]] = extractelement <4 x i32> [[TMP0]], i64 2
+// CHECK-NEXT:    [[CONV6:%.*]] = sitofp i32 [[VEC_LOAD5]] to float
+// CHECK-NEXT:    store float [[CONV6]], ptr [[GEP2]], align 4
+// CHECK-NEXT:    [[VEC_LOAD7:%.*]] = extractelement <4 x i32> [[TMP0]], i64 3
+// CHECK-NEXT:    store i32 [[VEC_LOAD7]], ptr [[GEP3]], align 4
+// CHECK-NEXT:    [[D8:%.*]] = getelementptr inbounds nuw [[STRUCT_BFIELDS]], ptr [[D]], i32 0, i32 0
 // CHECK-NEXT:    [[D9:%.*]] = getelementptr inbounds nuw [[STRUCT_BFIELDS]], ptr [[REF_TMP]], i32 0, i32 0
 // CHECK-NEXT:    [[TMP2:%.*]] = load double, ptr [[D9]], align 1
-// CHECK-NEXT:    store double [[TMP2]], ptr [[D1]], align 1
+// CHECK-NEXT:    store double [[TMP2]], ptr [[D8]], align 1
 // CHECK-NEXT:    [[E10:%.*]] = getelementptr inbounds nuw [[STRUCT_BFIELDS]], ptr [[D]], i32 0, i32 1
-// CHECK-NEXT:    [[TMP3:%.*]] = load <4 x i32>, ptr [[I_ADDR]], align 4
-// CHECK-NEXT:    [[GEP12:%.*]] = getelementptr inbounds [[STRUCT_DERIVED]], ptr [[REF_TMP11]], i32 0, i32 0
-// CHECK-NEXT:    [[E13:%.*]] = getelementptr inbounds nuw [[STRUCT_BFIELDS]], ptr [[GEP12]], i32 0, i32 1
-// CHECK-NEXT:    [[GEP14:%.*]] = getelementptr inbounds [[STRUCT_DERIVED]], ptr [[REF_TMP11]], i32 0, i32 0, i32 0
-// CHECK-NEXT:    [[GEP15:%.*]] = getelementptr inbounds [[STRUCT_DERIVED]], ptr [[REF_TMP11]], i32 0, i32 0, i32 2
-// CHECK-NEXT:    [[GEP16:%.*]] = getelementptr inbounds [[STRUCT_DERIVED]], ptr [[REF_TMP11]], i32 0, i32 1
-// CHECK-NEXT:    [[VEC_LOAD17:%.*]] = extractelement <4 x i32> [[TMP3]], i64 0
-// CHECK-NEXT:    [[CONV18:%.*]] = sitofp i32 [[VEC_LOAD17]] to double
-// CHECK-NEXT:    store double [[CONV18]], ptr [[GEP14]], align 8
-// CHECK-NEXT:    [[VEC_LOAD19:%.*]] = extractelement <4 x i32> [[TMP3]], i64 1
-// CHECK-NEXT:    [[TMP4:%.*]] = trunc i32 [[VEC_LOAD19]] to i24
-// CHECK-NEXT:    [[BF_LOAD20:%.*]] = load i24, ptr [[E13]], align 1
-// CHECK-NEXT:    [[BF_VALUE21:%.*]] = and i24 [[TMP4]], 32767
-// CHECK-NEXT:    [[BF_CLEAR22:%.*]] = and i24 [[BF_LOAD20]], -32768
-// CHECK-NEXT:    [[BF_SET23:%.*]] = or i24 [[BF_CLEAR22]], [[BF_VALUE21]]
-// CHECK-NEXT:    store i24 [[BF_SET23]], ptr [[E13]], align 1
-// CHECK-NEXT:    [[VEC_LOAD24:%.*]] = extractelement <4 x i32> [[TMP3]], i64 2
-// CHECK-NEXT:    [[CONV25:%.*]] = sitofp i32 [[VEC_LOAD24]] to float
-// CHECK-NEXT:    store float [[CONV25]], ptr [[GEP15]], align 4
-// CHECK-NEXT:    [[VEC_LOAD26:%.*]] = extractelement <4 x i32> [[TMP3]], i64 3
-// CHECK-NEXT:    store i32 [[VEC_LOAD26]], ptr [[GEP16]], align 4
-// CHECK-NEXT:    [[E27:%.*]] = getelementptr inbounds nuw [[STRUCT_BFIELDS]], ptr [[REF_TMP11]], i32 0, i32 1
-// CHECK-NEXT:    [[BF_LOAD28:%.*]] = load i24, ptr [[E27]], align 1
-// CHECK-NEXT:    [[BF_SHL:%.*]] = shl i24 [[BF_LOAD28]], 9
+// CHECK-NEXT:    [[E11:%.*]] = getelementptr inbounds nuw [[STRUCT_BFIELDS]], ptr [[REF_TMP]], i32 0, i32 1
+// CHECK-NEXT:    [[BF_LOAD12:%.*]] = load i24, ptr [[E11]], align 1
+// CHECK-NEXT:    [[BF_SHL:%.*]] = shl i24 [[BF_LOAD12]], 9
 // CHECK-NEXT:    [[BF_ASHR:%.*]] = ashr i24 [[BF_SHL]], 9
 // CHECK-NEXT:    [[BF_CAST:%.*]] = sext i24 [[BF_ASHR]] to i32
-// CHECK-NEXT:    [[TMP5:%.*]] = trunc i32 [[BF_CAST]] to i24
-// CHECK-NEXT:    [[BF_LOAD29:%.*]] = load i24, ptr [[E10]], align 1
-// CHECK-NEXT:    [[BF_VALUE30:%.*]] = and i24 [[TMP5]], 32767
-// CHECK-NEXT:    [[BF_CLEAR31:%.*]] = and i24 [[BF_LOAD29]], -32768
-// CHECK-NEXT:    [[BF_SET32:%.*]] = or i24 [[BF_CLEAR31]], [[BF_VALUE30]]
-// CHECK-NEXT:    store i24 [[BF_SET32]], ptr [[E10]], align 1
+// CHECK-NEXT:    [[TMP3:%.*]] = trunc i32 [[BF_CAST]] to i24
+// CHECK-NEXT:    [[BF_LOAD13:%.*]] = load i24, ptr [[E10]], align 1
+// CHECK-NEXT:    [[BF_VALUE14:%.*]] = and i24 [[TMP3]], 32767
+// CHECK-NEXT:    [[BF_CLEAR15:%.*]] = and i24 [[BF_LOAD13]], -32768
+// CHECK-NEXT:    [[BF_SET16:%.*]] = or i24 [[BF_CLEAR15]], [[BF_VALUE14]]
+// CHECK-NEXT:    store i24 [[BF_SET16]], ptr [[E10]], align 1
 // CHECK-NEXT:    [[F:%.*]] = getelementptr inbounds nuw [[STRUCT_BFIELDS]], ptr [[D]], i32 0, i32 2
-// CHECK-NEXT:    [[TMP6:%.*]] = load <4 x i32>, ptr [[I_ADDR]], align 4
-// CHECK-NEXT:    [[GEP34:%.*]] = getelementptr inbounds [[STRUCT_DERIVED]], ptr [[REF_TMP33]], i32 0, i32 0
-// CHECK-NEXT:    [[E35:%.*]] = getelementptr inbounds nuw [[STRUCT_BFIELDS]], ptr [[GEP34]], i32 0, i32 1
-// CHECK-NEXT:    [[GEP36:%.*]] = getelementptr inbounds [[STRUCT_DERIVED]], ptr [[REF_TMP33]], i32 0, i32 0, i32 0
-// CHECK-NEXT:    [[GEP37:%.*]] = getelementptr inbounds [[STRUCT_DERIVED]], ptr [[REF_TMP33]], i32 0, i32 0, i32 2
-// CHECK-NEXT:    [[GEP38:%.*]] = getelementptr inbounds [[STRUCT_DERIVED]], ptr [[REF_TMP33]], i32 0, i32 1
-// CHECK-NEXT:    [[VEC_LOAD39:%.*]] = extractelement <4 x i32> [[TMP6]], i64 0
-// CHECK-NEXT:    [[CONV40:%.*]] = sitofp i32 [[VEC_LOAD39]] to double
-// CHECK-NEXT:    store double [[CONV40]], ptr [[GEP36]], align 8
-// CHECK-NEXT:    [[VEC_LOAD41:%.*]] = extractelement <4 x i32> [[TMP6]], i64 1
-// CHECK-NEXT:    [[TMP7:%.*]] = trunc i32 [[VEC_LOAD41]] to i24
-// CHECK-NEXT:    [[BF_LOAD42:%.*]] = load i24, ptr [[E35]], align 1
-// CHECK-NEXT:    [[BF_VALUE43:%.*]] = and i24 [[TMP7]], 32767
-// CHECK-NEXT:    [[BF_CLEAR44:%.*]] = and i24 [[BF_LOAD42]], -32768
-// CHECK-NEXT:    [[BF_SET45:%.*]] = or i24 [[BF_CLEAR44]], [[BF_VALUE43]]
-// CHECK-NEXT:    store i24 [[BF_SET45]], ptr [[E35]], align 1
-// CHECK-NEXT:    [[VEC_LOAD46:%.*]] = extractelement <4 x i32> [[TMP6]], i64 2
-// CHECK-NEXT:    [[CONV47:%.*]] = sitofp i32 [[VEC_LOAD46]] to float
-// CHECK-NEXT:    store float [[CONV47]], ptr [[GEP37]], align 4
-// CHECK-NEXT:    [[VEC_LOAD48:%.*]] = extractelement <4 x i32> [[TMP6]], i64 3
-// CHECK-NEXT:    store i32 [[VEC_LOAD48]], ptr [[GEP38]], align 4
-// CHECK-NEXT:    [[F49:%.*]] = getelementptr inbounds nuw [[STRUCT_BFIELDS]], ptr [[REF_TMP33]], i32 0, i32 2
-// CHECK-NEXT:    [[TMP8:%.*]] = load float, ptr [[F49]], align 1
-// CHECK-NEXT:    store float [[TMP8]], ptr [[F]], align 1
+// CHECK-NEXT:    [[F17:%.*]] = getelementptr inbounds nuw [[STRUCT_BFIELDS]], ptr [[REF_TMP]], i32 0, i32 2
+// CHECK-NEXT:    [[TMP4:%.*]] = load float, ptr [[F17]], align 1
+// CHECK-NEXT:    store float [[TMP4]], ptr [[F]], align 1
 // CHECK-NEXT:    [[G:%.*]] = getelementptr inbounds nuw [[STRUCT_DERIVED]], ptr [[D]], i32 0, i32 1
-// CHECK-NEXT:    [[TMP9:%.*]] = load <4 x i32>, ptr [[I_ADDR]], align 4
-// CHECK-NEXT:    [[GEP51:%.*]] = getelementptr inbounds [[STRUCT_DERIVED]], ptr [[REF_TMP50]], i32 0, i32 0
-// CHECK-NEXT:    [[E52:%.*]] = getelementptr inbounds nuw [[STRUCT_BFIELDS]], ptr [[GEP51]], i32 0, i32 1
-// CHECK-NEXT:    [[GEP53:%.*]] = getelementptr inbounds [[STRUCT_DERIVED]], ptr [[REF_TMP50]], i32 0, i32 0, i32 0
-// CHECK-NEXT:    [[GEP54:%.*]] = getelementptr inbounds [[STRUCT_DERIVED]], ptr [[REF_TMP50]], i32 0, i32 0, i32 2
-// CHECK-NEXT:    [[GEP55:%.*]] = getelementptr inbounds [[STRUCT_DERIVED]], ptr [[REF_TMP50]], i32 0, i32 1
-// CHECK-NEXT:    [[VEC_LOAD56:%.*]] = extractelement <4 x i32> [[TMP9]], i64 0
-// CHECK-NEXT:    [[CONV57:%.*]] = sitofp i32 [[VEC_LOAD56]] to double
-// CHECK-NEXT:    store double [[CONV57]], ptr [[GEP53]], align 8
-// CHECK-NEXT:    [[VEC_LOAD58:%.*]] = extractelement <4 x i32> [[TMP9]], i64 1
-// CHECK-NEXT:    [[TMP10:%.*]] = trunc i32 [[VEC_LOAD58]] to i24
-// CHECK-NEXT:    [[BF_LOAD59:%.*]] = load i24, ptr [[E52]], align 1
-// CHECK-NEXT:    [[BF_VALUE60:%.*]] = and i24 [[TMP10]], 32767
-// CHECK-NEXT:    [[BF_CLEAR61:%.*]] = and i24 [[BF_LOAD59]], -32768
-// CHECK-NEXT:    [[BF_SET62:%.*]] = or i24 [[BF_CLEAR61]], [[BF_VALUE60]]
-// CHECK-NEXT:    store i24 [[BF_SET62]], ptr [[E52]], align 1
-// CHECK-NEXT:    [[VEC_LOAD63:%.*]] = extractelement <4 x i32> [[TMP9]], i64 2
-// CHECK-NEXT:    [[CONV64:%.*]] = sitofp i32 [[VEC_LOAD63]] to float
-// CHECK-NEXT:    store float [[CONV64]], ptr [[GEP54]], align 4
-// CHECK-NEXT:    [[VEC_LOAD65:%.*]] = extractelement <4 x i32> [[TMP9]], i64 3
-// CHECK-NEXT:    store i32 [[VEC_LOAD65]], ptr [[GEP55]], align 4
-// CHECK-NEXT:    [[G66:%.*]] = getelementptr inbounds nuw [[STRUCT_DERIVED]], ptr [[REF_TMP50]], i32 0, i32 1
-// CHECK-NEXT:    [[TMP11:%.*]] = load i32, ptr [[G66]], align 1
-// CHECK-NEXT:    store i32 [[TMP11]], ptr [[G]], align 1
+// CHECK-NEXT:    [[G18:%.*]] = getelementptr inbounds nuw [[STRUCT_DERIVED]], ptr [[REF_TMP]], i32 0, i32 1
+// CHECK-NEXT:    [[TMP5:%.*]] = load i32, ptr [[G18]], align 1
+// CHECK-NEXT:    store i32 [[TMP5]], ptr [[G]], align 1
 // CHECK-NEXT:    ret void
 //
 void call10(int4 I) {
@@ -433,103 +311,51 @@ void call10(int4 I) {
 // CHECK-NEXT:    [[B:%.*]] = alloca [[STRUCT_BFIELDS:%.*]], align 1
 // CHECK-NEXT:    [[REF_TMP:%.*]] = alloca [[STRUCT_BFIELDS]], align 1
 // CHECK-NEXT:    [[AGG_TEMP:%.*]] = alloca [[STRUCT_DERIVED:%.*]], align 1
-// CHECK-NEXT:    [[REF_TMP12:%.*]] = alloca [[STRUCT_BFIELDS]], align 1
-// CHECK-NEXT:    [[AGG_TEMP13:%.*]] = alloca [[STRUCT_DERIVED]], align 1
-// CHECK-NEXT:    [[REF_TMP40:%.*]] = alloca [[STRUCT_BFIELDS]], align 1
-// CHECK-NEXT:    [[AGG_TEMP41:%.*]] = alloca [[STRUCT_DERIVED]], align 1
 // CHECK-NEXT:    store ptr [[D]], ptr [[D_INDIRECT_ADDR]], align 4
-// CHECK-NEXT:    [[D1:%.*]] = getelementptr inbounds nuw [[STRUCT_BFIELDS]], ptr [[B]], i32 0, i32 0
 // CHECK-NEXT:    call void @llvm.memcpy.p0.p0.i32(ptr align 1 [[AGG_TEMP]], ptr align 1 [[D]], i32 19, i1 false)
 // CHECK-NEXT:    [[GEP:%.*]] = getelementptr inbounds [[STRUCT_BFIELDS]], ptr [[REF_TMP]], i32 0
 // CHECK-NEXT:    [[E:%.*]] = getelementptr inbounds nuw [[STRUCT_BFIELDS]], ptr [[GEP]], i32 0, i32 1
-// CHECK-NEXT:    [[GEP2:%.*]] = getelementptr inbounds [[STRUCT_BFIELDS]], ptr [[REF_TMP]], i32 0, i32 0
-// CHECK-NEXT:    [[GEP3:%.*]] = getelementptr inbounds [[STRUCT_BFIELDS]], ptr [[REF_TMP]], i32 0, i32 2
-// CHECK-NEXT:    [[GEP4:%.*]] = getelementptr inbounds [[STRUCT_DERIVED]], ptr [[AGG_TEMP]], i32 0, i32 0
-// CHECK-NEXT:    [[E5:%.*]] = getelementptr inbounds nuw [[STRUCT_BFIELDS]], ptr [[GEP4]], i32 0, i32 1
-// CHECK-NEXT:    [[GEP6:%.*]] = getelementptr inbounds [[STRUCT_DERIVED]], ptr [[AGG_TEMP]], i32 0, i32 0, i32 0
-// CHECK-NEXT:    [[GEP7:%.*]] = getelementptr inbounds [[STRUCT_DERIVED]], ptr [[AGG_TEMP]], i32 0, i32 0, i32 2
-// CHECK-NEXT:    [[GEP8:%.*]] = getelementptr inbounds [[STRUCT_DERIVED]], ptr [[AGG_TEMP]], i32 0, i32 1
-// CHECK-NEXT:    [[TMP0:%.*]] = load double, ptr [[GEP6]], align 8
-// CHECK-NEXT:    store double [[TMP0]], ptr [[GEP2]], align 8
-// CHECK-NEXT:    [[BF_LOAD:%.*]] = load i24, ptr [[E5]], align 1
+// CHECK-NEXT:    [[GEP1:%.*]] = getelementptr inbounds [[STRUCT_BFIELDS]], ptr [[REF_TMP]], i32 0, i32 0
+// CHECK-NEXT:    [[GEP2:%.*]] = getelementptr inbounds [[STRUCT_BFIELDS]], ptr [[REF_TMP]], i32 0, i32 2
+// CHECK-NEXT:    [[GEP3:%.*]] = getelementptr inbounds [[STRUCT_DERIVED]], ptr [[AGG_TEMP]], i32 0, i32 0
+// CHECK-NEXT:    [[E4:%.*]] = getelementptr inbounds nuw [[STRUCT_BFIELDS]], ptr [[GEP3]], i32 0, i32 1
+// CHECK-NEXT:    [[GEP5:%.*]] = getelementptr inbounds [[STRUCT_DERIVED]], ptr [[AGG_TEMP]], i32 0, i32 0, i32 0
+// CHECK-NEXT:    [[GEP6:%.*]] = getelementptr inbounds [[STRUCT_DERIVED]], ptr [[AGG_TEMP]], i32 0, i32 0, i32 2
+// CHECK-NEXT:    [[GEP7:%.*]] = getelementptr inbounds [[STRUCT_DERIVED]], ptr [[AGG_TEMP]], i32 0, i32 1
+// CHECK-NEXT:    [[TMP0:%.*]] = load double, ptr [[GEP5]], align 8
+// CHECK-NEXT:    store double [[TMP0]], ptr [[GEP1]], align 8
+// CHECK-NEXT:    [[BF_LOAD:%.*]] = load i24, ptr [[E4]], align 1
 // CHECK-NEXT:    [[BF_SHL:%.*]] = shl i24 [[BF_LOAD]], 9
 // CHECK-NEXT:    [[BF_ASHR:%.*]] = ashr i24 [[BF_SHL]], 9
 // CHECK-NEXT:    [[BF_CAST:%.*]] = sext i24 [[BF_ASHR]] to i32
 // CHECK-NEXT:    [[TMP1:%.*]] = trunc i32 [[BF_CAST]] to i24
-// CHECK-NEXT:    [[BF_LOAD9:%.*]] = load i24, ptr [[E]], align 1
+// CHECK-NEXT:    [[BF_LOAD8:%.*]] = load i24, ptr [[E]], align 1
 // CHECK-NEXT:    [[BF_VALUE:%.*]] = and i24 [[TMP1]], 32767
-// CHECK-NEXT:    [[BF_CLEAR:%.*]] = and i24 [[BF_LOAD9]], -32768
+// CHECK-NEXT:    [[BF_CLEAR:%.*]] = and i24 [[BF_LOAD8]], -32768
 // CHECK-NEXT:    [[BF_SET:%.*]] = or i24 [[BF_CLEAR]], [[BF_VALUE]]
 // CHECK-NEXT:    store i24 [[BF_SET]], ptr [[E]], align 1
-// CHECK-NEXT:    [[TMP2:%.*]] = load float, ptr [[GEP7]], align 4
-// CHECK-NEXT:    store float [[TMP2]], ptr [[GEP3]], align 4
+// CHECK-NEXT:    [[TMP2:%.*]] = load float, ptr [[GEP6]], align 4
+// CHECK-NEXT:    store float [[TMP2]], ptr [[GEP2]], align 4
+// CHECK-NEXT:    [[D9:%.*]] = getelementptr inbounds nuw [[STRUCT_BFIELDS]], ptr [[B]], i32 0, i32 0
 // CHECK-NEXT:    [[D10:%.*]] = getelementptr inbounds nuw [[STRUCT_BFIELDS]], ptr [[REF_TMP]], i32 0, i32 0
 // CHECK-NEXT:    [[TMP3:%.*]] = load double, ptr [[D10]], align 1
-// CHECK-NEXT:    store double [[TMP3]], ptr [[D1]], align 1
+// CHECK-NEXT:    store double [[TMP3]], ptr [[D9]], align 1
 // CHECK-NEXT:    [[E11:%.*]] = getelementptr inbounds nuw [[STRUCT_BFIELDS]], ptr [[B]], i32 0, i32 1
-// CHECK-NEXT:    call void @llvm.memcpy.p0.p0.i32(ptr align 1 [[AGG_TEMP13]], ptr align 1 [[D]], i32 19, i1 false)
-// CHECK-NEXT:    [[GEP14:%.*]] = getelementptr inbounds [[STRUCT_BFIELDS]], ptr [[REF_TMP12]], i32 0
-// CHECK-NEXT:    [[E15:%.*]] = getelementptr inbounds nuw [[STRUCT_BFIELDS]], ptr [[GEP14]], i32 0, i32 1
-// CHECK-NEXT:    [[GEP16:%.*]] = getelementptr inbounds [[STRUCT_BFIELDS]], ptr [[REF_TMP12]], i32 0, i32 0
-// CHECK-NEXT:    [[GEP17:%.*]] = getelementptr inbounds [[STRUCT_BFIELDS]], ptr [[REF_TMP12]], i32 0, i32 2
-// CHECK-NEXT:    [[GEP18:%.*]] = getelementptr inbounds [[STRUCT_DERIVED]], ptr [[AGG_TEMP13]], i32 0, i32 0
-// CHECK-NEXT:    [[E19:%.*]] = getelementptr inbounds nuw [[STRUCT_BFIELDS]], ptr [[GEP18]], i32 0, i32 1
-// CHECK-NEXT:    [[GEP20:%.*]] = getelementptr inbounds [[STRUCT_DERIVED]], ptr [[AGG_TEMP13]], i32 0, i32 0, i32 0
-// CHECK-NEXT:    [[GEP21:%.*]] = getelementptr inbounds [[STRUCT_DERIVED]], ptr [[AGG_TEMP13]], i32 0, i32 0, i32 2
-// CHECK-NEXT:    [[GEP22:%.*]] = getelementptr inbounds [[STRUCT_DERIVED]], ptr [[AGG_TEMP13]], i32 0, i32 1
-// CHECK-NEXT:    [[TMP4:%.*]] = load double, ptr [[GEP20]], align 8
-// CHECK-NEXT:    store double [[TMP4]], ptr [[GEP16]], align 8
-// CHECK-NEXT:    [[BF_LOAD23:%.*]] = load i24, ptr [[E19]], align 1
-// CHECK-NEXT:    [[BF_SHL24:%.*]] = shl i24 [[BF_LOAD23]], 9
-// CHECK-NEXT:    [[BF_ASHR25:%.*]] = ashr i24 [[BF_SHL24]], 9
-// CHECK-NEXT:    [[BF_CAST26:%.*]] = sext i24 [[BF_ASHR25]] to i32
-// CHECK-NEXT:    [[TMP5:%.*]] = trunc i32 [[BF_CAST26]] to i24
-// CHECK-NEXT:    [[BF_LOAD27:%.*]] = load i24, ptr [[E15]], align 1
-// CHECK-NEXT:    [[BF_VALUE28:%.*]] = and i24 [[TMP5]], 32767
-// CHECK-NEXT:    [[BF_CLEAR29:%.*]] = and i24 [[BF_LOAD27]], -32768
-// CHECK-NEXT:    [[BF_SET30:%.*]] = or i24 [[BF_CLEAR29]], [[BF_VALUE28]]
-// CHECK-NEXT:    store i24 [[BF_SET30]], ptr [[E15]], align 1
-// CHECK-NEXT:    [[TMP6:%.*]] = load float, ptr [[GEP21]], align 4
-// CHECK-NEXT:    store float [[TMP6]], ptr [[GEP17]], align 4
-// CHECK-NEXT:    [[E31:%.*]] = getelementptr inbounds nuw [[STRUCT_BFIELDS]], ptr [[REF_TMP12]], i32 0, i32 1
-// CHECK-NEXT:    [[BF_LOAD32:%.*]] = load i24, ptr [[E31]], align 1
-// CHECK-NEXT:    [[BF_SHL33:%.*]] = shl i24 [[BF_LOAD32]], 9
-// CHECK-NEXT:    [[BF_ASHR34:%.*]] = ashr i24 [[BF_SHL33]], 9
-// CHECK-NEXT:    [[BF_CAST35:%.*]] = sext i24 [[BF_ASHR34]] to i32
-// CHECK-NEXT:    [[TMP7:%.*]] = trunc i32 [[BF_CAST35]] to i24
-// CHECK-NEXT:    [[BF_LOAD36:%.*]] = load i24, ptr [[E11]], align 1
-// CHECK-NEXT:    [[BF_VALUE37:%.*]] = and i24 [[TMP7]], 32767
-// CHECK-NEXT:    [[BF_CLEAR38:%.*]] = and i24 [[BF_LOAD36]], -32768
-// CHECK-NEXT:    [[BF_SET39:%.*]] = or i24 [[BF_CLEAR38]], [[BF_VALUE37]]
-// CHECK-NEXT:    store i24 [[BF_SET39]], ptr [[E11]], align 1
+// CHECK-NEXT:    [[E12:%.*]] = getelementptr inbounds nuw [[STRUCT_BFIELDS]], ptr [[REF_TMP]], i32 0, i32 1
+// CHECK-NEXT:    [[BF_LOAD13:%.*]] = load i24, ptr [[E12]], align 1
+// CHECK-NEXT:    [[BF_SHL14:%.*]] = shl i24 [[BF_LOAD13]], 9
+// CHECK-NEXT:    [[BF_ASHR15:%.*]] = ashr i24 [[BF_SHL14]], 9
+// CHECK-NEXT:    [[BF_CAST16:%.*]] = sext i24 [[BF_ASHR15]] to i32
+// CHECK-NEXT:    [[TMP4:%.*]] = trunc i32 [[BF_CAST16]] to i24
+// CHECK-NEXT:    [[BF_LOAD17:%.*]] = load i24, ptr [[E11]], align 1
+// CHECK-NEXT:    [[BF_VALUE18:%.*]] = and i24 [[TMP4]], 32767
+// CHECK-NEXT:    [[BF_CLEAR19:%.*]] = and i24 [[BF_LOAD17]], -32768
+// CHECK-NEXT:    [[BF_SET20:%.*]] = or i24 [[BF_CLEAR19]], [[BF_VALUE18]]
+// CHECK-NEXT:    store i24 [[BF_SET20]], ptr [[E11]], align 1
 // CHECK-NEXT:    [[F:%.*]] = getelementptr inbounds nuw [[STRUCT_BFIELDS]], ptr [[B]], i32 0, i32 2
-// CHECK-NEXT:    call void @llvm.memcpy.p0.p0.i32(ptr align 1 [[AGG_TEMP41]], ptr align 1 [[D]], i32 19, i1 false)
-// CHECK-NEXT:    [[GEP42:%.*]] = getelementptr inbounds [[STRUCT_BFIELDS]], ptr [[REF_TMP40]], i32 0
-// CHECK-NEXT:    [[E43:%.*]] = getelementptr inbounds nuw [[STRUCT_BFIELDS]], ptr [[GEP42]], i32 0, i32 1
-// CHECK-NEXT:    [[GEP44:%.*]] = getelementptr inbounds [[STRUCT_BFIELDS]], ptr [[REF_TMP40]], i32 0, i32 0
-// CHECK-NEXT:    [[GEP45:%.*]] = getelementptr inbounds [[STRUCT_BFIELDS]], ptr [[REF_TMP40]], i32 0, i32 2
-// CHECK-NEXT:    [[GEP46:%.*]] = getelementptr inbounds [[STRUCT_DERIVED]], ptr [[AGG_TEMP41]], i32 0, i32 0
-// CHECK-NEXT:    [[E47:%.*]] = getelementptr inbounds nuw [[STRUCT_BFIELDS]], ptr [[GEP46]], i32 0, i32 1
-// CHECK-NEXT:    [[GEP48:%.*]] = getelementptr inbounds [[STRUCT_DERIVED]], ptr [[AGG_TEMP41]], i32 0, i32 0, i32 0
-// CHECK-NEXT:    [[GEP49:%.*]] = getelementptr inbounds [[STRUCT_DERIVED]], ptr [[AGG_TEMP41]], i32 0, i32 0, i32 2
-// CHECK-NEXT:    [[GEP50:%.*]] = getelementptr inbounds [[STRUCT_DERIVED]], ptr [[AGG_TEMP41]], i32 0, i32 1
-// CHECK-NEXT:    [[TMP8:%.*]] = load double, ptr [[GEP48]], align 8
-// CHECK-NEXT:    store double [[TMP8]], ptr [[GEP44]], align 8
-// CHECK-NEXT:    [[BF_LOAD51:%.*]] = load i24, ptr [[E47]], align 1
-// CHECK-NEXT:    [[BF_SHL52:%.*]] = shl i24 [[BF_LOAD51]], 9
-// CHECK-NEXT:    [[BF_ASHR53:%.*]] = ashr i24 [[BF_SHL52]], 9
-// CHECK-NEXT:    [[BF_CAST54:%.*]] = sext i24 [[BF_ASHR53]] to i32
-// CHECK-NEXT:    [[TMP9:%.*]] = trunc i32 [[BF_CAST54]] to i24
-// CHECK-NEXT:    [[BF_LOAD55:%.*]] = load i24, ptr [[E43]], align 1
-// CHECK-NEXT:    [[BF_VALUE56:%.*]] = and i24 [[TMP9]], 32767
-// CHECK-NEXT:    [[BF_CLEAR57:%.*]] = and i24 [[BF_LOAD55]], -32768
-// CHECK-NEXT:    [[BF_SET58:%.*]] = or i24 [[BF_CLEAR57]], [[BF_VALUE56]]
-// CHECK-NEXT:    store i24 [[BF_SET58]], ptr [[E43]], align 1
-// CHECK-NEXT:    [[TMP10:%.*]] = load float, ptr [[GEP49]], align 4
-// CHECK-NEXT:    store float [[TMP10]], ptr [[GEP45]], align 4
-// CHECK-NEXT:    [[F59:%.*]] = getelementptr inbounds nuw [[STRUCT_BFIELDS]], ptr [[REF_TMP40]], i32 0, i32 2
-// CHECK-NEXT:    [[TMP11:%.*]] = load float, ptr [[F59]], align 1
-// CHECK-NEXT:    store float [[TMP11]], ptr [[F]], align 1
+// CHECK-NEXT:    [[F21:%.*]] = getelementptr inbounds nuw [[STRUCT_BFIELDS]], ptr [[REF_TMP]], i32 0, i32 2
+// CHECK-NEXT:    [[TMP5:%.*]] = load float, ptr [[F21]], align 1
+// CHECK-NEXT:    store float [[TMP5]], ptr [[F]], align 1
 // CHECK-NEXT:    ret void
 //
 void call11(Derived D) {
@@ -582,295 +408,85 @@ struct MoreBFields {
 // CHECK-NEXT:    [[A_ADDR:%.*]] = alloca i32, align 4
 // CHECK-NEXT:    [[MBF:%.*]] = alloca [[STRUCT_MOREBFIELDS:%.*]], align 1
 // CHECK-NEXT:    [[REF_TMP:%.*]] = alloca [[STRUCT_MOREBFIELDS]], align 1
-// CHECK-NEXT:    [[REF_TMP20:%.*]] = alloca [[STRUCT_MOREBFIELDS]], align 1
-// CHECK-NEXT:    [[REF_TMP54:%.*]] = alloca [[STRUCT_MOREBFIELDS]], align 1
-// CHECK-NEXT:    [[REF_TMP83:%.*]] = alloca [[STRUCT_MOREBFIELDS]], align 1
-// CHECK-NEXT:    [[REF_TMP118:%.*]] = alloca [[STRUCT_MOREBFIELDS]], align 1
-// CHECK-NEXT:    [[REF_TMP152:%.*]] = alloca [[STRUCT_MOREBFIELDS]], align 1
-// CHECK-NEXT:    [[REF_TMP180:%.*]] = alloca [[STRUCT_MOREBFIELDS]], align 1
 // CHECK-NEXT:    store i32 [[A]], ptr [[A_ADDR]], align 4
-// CHECK-NEXT:    [[A1:%.*]] = getelementptr inbounds nuw [[STRUCT_MOREBFIELDS]], ptr [[MBF]], i32 0, i32 0
 // CHECK-NEXT:    [[TMP0:%.*]] = load i32, ptr [[A_ADDR]], align 4
 // CHECK-NEXT:    [[GEP:%.*]] = getelementptr inbounds [[STRUCT_MOREBFIELDS]], ptr [[REF_TMP]], i32 0
 // CHECK-NEXT:    [[B:%.*]] = getelementptr inbounds nuw [[STRUCT_MOREBFIELDS]], ptr [[GEP]], i32 0, i32 1
 // CHECK-NEXT:    [[D:%.*]] = getelementptr inbounds nuw [[STRUCT_MOREBFIELDS]], ptr [[GEP]], i32 0, i32 3
 // CHECK-NEXT:    [[E:%.*]] = getelementptr inbounds nuw [[STRUCT_MOREBFIELDS]], ptr [[GEP]], i32 0, i32 3
-// CHECK-NEXT:    [[GEP2:%.*]] = getelementptr inbounds [[STRUCT_MOREBFIELDS]], ptr [[REF_TMP]], i32 0, i32 0
-// CHECK-NEXT:    [[GEP3:%.*]] = getelementptr inbounds [[STRUCT_MOREBFIELDS]], ptr [[REF_TMP]], i32 0, i32 2
-// CHECK-NEXT:    [[GEP4:%.*]] = getelementptr inbounds [[STRUCT_MOREBFIELDS]], ptr [[REF_TMP]], i32 0, i32 5
-// CHECK-NEXT:    [[GEP5:%.*]] = getelementptr inbounds [[STRUCT_MOREBFIELDS]], ptr [[REF_TMP]], i32 0, i32 7
-// CHECK-NEXT:    store i32 [[TMP0]], ptr [[GEP2]], align 4
+// CHECK-NEXT:    [[GEP1:%.*]] = getelementptr inbounds [[STRUCT_MOREBFIELDS]], ptr [[REF_TMP]], i32 0, i32 0
+// CHECK-NEXT:    [[GEP2:%.*]] = getelementptr inbounds [[STRUCT_MOREBFIELDS]], ptr [[REF_TMP]], i32 0, i32 2
+// CHECK-NEXT:    [[GEP3:%.*]] = getelementptr inbounds [[STRUCT_MOREBFIELDS]], ptr [[REF_TMP]], i32 0, i32 5
+// CHECK-NEXT:    [[GEP4:%.*]] = getelementptr inbounds [[STRUCT_MOREBFIELDS]], ptr [[REF_TMP]], i32 0, i32 7
+// CHECK-NEXT:    store i32 [[TMP0]], ptr [[GEP1]], align 4
 // CHECK-NEXT:    [[CONV:%.*]] = sext i32 [[TMP0]] to i64
 // CHECK-NEXT:    [[BF_LOAD:%.*]] = load i64, ptr [[B]], align 1
 // CHECK-NEXT:    [[BF_VALUE:%.*]] = and i64 [[CONV]], 1152921504606846975
 // CHECK-NEXT:    [[BF_CLEAR:%.*]] = and i64 [[BF_LOAD]], -1152921504606846976
 // CHECK-NEXT:    [[BF_SET:%.*]] = or i64 [[BF_CLEAR]], [[BF_VALUE]]
 // CHECK-NEXT:    store i64 [[BF_SET]], ptr [[B]], align 1
-// CHECK-NEXT:    [[CONV6:%.*]] = sitofp i32 [[TMP0]] to float
-// CHECK-NEXT:    store float [[CONV6]], ptr [[GEP3]], align 4
-// CHECK-NEXT:    [[CONV7:%.*]] = trunc i32 [[TMP0]] to i16
-// CHECK-NEXT:    [[BF_LOAD8:%.*]] = load i16, ptr [[D]], align 1
-// CHECK-NEXT:    [[BF_VALUE9:%.*]] = and i16 [[CONV7]], 1023
-// CHECK-NEXT:    [[BF_CLEAR10:%.*]] = and i16 [[BF_LOAD8]], -1024
-// CHECK-NEXT:    [[BF_SET11:%.*]] = or i16 [[BF_CLEAR10]], [[BF_VALUE9]]
-// CHECK-NEXT:    store i16 [[BF_SET11]], ptr [[D]], align 1
-// CHECK-NEXT:    [[CONV12:%.*]] = trunc i32 [[TMP0]] to i16
-// CHECK-NEXT:    [[BF_LOAD13:%.*]] = load i16, ptr [[E]], align 1
-// CHECK-NEXT:    [[BF_VALUE14:%.*]] = and i16 [[CONV12]], 63
-// CHECK-NEXT:    [[BF_SHL:%.*]] = shl i16 [[BF_VALUE14]], 10
-// CHECK-NEXT:    [[BF_CLEAR15:%.*]] = and i16 [[BF_LOAD13]], 1023
-// CHECK-NEXT:    [[BF_SET16:%.*]] = or i16 [[BF_CLEAR15]], [[BF_SHL]]
-// CHECK-NEXT:    store i16 [[BF_SET16]], ptr [[E]], align 1
-// CHECK-NEXT:    [[CONV17:%.*]] = sitofp i32 [[TMP0]] to double
-// CHECK-NEXT:    store double [[CONV17]], ptr [[GEP4]], align 8
-// CHECK-NEXT:    store i32 [[TMP0]], ptr [[GEP5]], align 4
+// CHECK-NEXT:    [[CONV5:%.*]] = sitofp i32 [[TMP0]] to float
+// CHECK-NEXT:    store float [[CONV5]], ptr [[GEP2]], align 4
+// CHECK-NEXT:    [[CONV6:%.*]] = trunc i32 [[TMP0]] to i16
+// CHECK-NEXT:    [[BF_LOAD7:%.*]] = load i16, ptr [[D]], align 1
+// CHECK-NEXT:    [[BF_VALUE8:%.*]] = and i16 [[CONV6]], 1023
+// CHECK-NEXT:    [[BF_CLEAR9:%.*]] = and i16 [[BF_LOAD7]], -1024
+// CHECK-NEXT:    [[BF_SET10:%.*]] = or i16 [[BF_CLEAR9]], [[BF_VALUE8]]
+// CHECK-NEXT:    store i16 [[BF_SET10]], ptr [[D]], align 1
+// CHECK-NEXT:    [[CONV11:%.*]] = trunc i32 [[TMP0]] to i16
+// CHECK-NEXT:    [[BF_LOAD12:%.*]] = load i16, ptr [[E]], align 1
+// CHECK-NEXT:    [[BF_VALUE13:%.*]] = and i16 [[CONV11]], 63
+// CHECK-NEXT:    [[BF_SHL:%.*]] = shl i16 [[BF_VALUE13]], 10
+// CHECK-NEXT:    [[BF_CLEAR14:%.*]] = and i16 [[BF_LOAD12]], 1023
+// CHECK-NEXT:    [[BF_SET15:%.*]] = or i16 [[BF_CLEAR14]], [[BF_SHL]]
+// CHECK-NEXT:    store i16 [[BF_SET15]], ptr [[E]], align 1
+// CHECK-NEXT:    [[CONV16:%.*]] = sitofp i32 [[TMP0]] to double
+// CHECK-NEXT:    store double [[CONV16]], ptr [[GEP3]], align 8
+// CHECK-NEXT:    store i32 [[TMP0]], ptr [[GEP4]], align 4
+// CHECK-NEXT:    [[A17:%.*]] = getelementptr inbounds nuw [[STRUCT_MOREBFIELDS]], ptr [[MBF]], i32 0, i32 0
 // CHECK-NEXT:    [[A18:%.*]] = getelementptr inbounds nuw [[STRUCT_MOREBFIELDS]], ptr [[REF_TMP]], i32 0, i32 0
 // CHECK-NEXT:    [[TMP1:%.*]] = load i32, ptr [[A18]], align 1
-// CHECK-NEXT:    store i32 [[TMP1]], ptr [[A1]], align 1
+// CHECK-NEXT:    store i32 [[TMP1]], ptr [[A17]], align 1
 // CHECK-NEXT:    [[B19:%.*]] = getelementptr inbounds nuw [[STRUCT_MOREBFIELDS]], ptr [[MBF]], i32 0, i32 1
-// CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[A_ADDR]], align 4
-// CHECK-NEXT:    [[GEP21:%.*]] = getelementptr inbounds [[STRUCT_MOREBFIELDS]], ptr [[REF_TMP20]], i32 0
-// CHECK-NEXT:    [[B22:%.*]] = getelementptr inbounds nuw [[STRUCT_MOREBFIELDS]], ptr [[GEP21]], i32 0, i32 1
-// CHECK-NEXT:    [[D23:%.*]] = getelementptr inbounds nuw [[STRUCT_MOREBFIELDS]], ptr [[GEP21]], i32 0, i32 3
-// CHECK-NEXT:    [[E24:%.*]] = getelementptr inbounds nuw [[STRUCT_MOREBFIELDS]], ptr [[GEP21]], i32 0, i32 3
-// CHECK-NEXT:    [[GEP25:%.*]] = getelementptr inbounds [[STRUCT_MOREBFIELDS]], ptr [[REF_TMP20]], i32 0, i32 0
-// CHECK-NEXT:    [[GEP26:%.*]] = getelementptr inbounds [[STRUCT_MOREBFIELDS]], ptr [[REF_TMP20]], i32 0, i32 2
-// CHECK-NEXT:    [[GEP27:%.*]] = getelementptr inbounds [[STRUCT_MOREBFIELDS]], ptr [[REF_TMP20]], i32 0, i32 5
-// CHECK-NEXT:    [[GEP28:%.*]] = getelementptr inbounds [[STRUCT_MOREBFIELDS]], ptr [[REF_TMP20]], i32 0, i32 7
-// CHECK-NEXT:    store i32 [[TMP2]], ptr [[GEP25]], align 4
-// CHECK-NEXT:    [[CONV29:%.*]] = sext i32 [[TMP2]] to i64
-// CHECK-NEXT:    [[BF_LOAD30:%.*]] = load i64, ptr [[B22]], align 1
-// CHECK-NEXT:    [[BF_VALUE31:%.*]] = and i64 [[CONV29]], 1152921504606846975
-// CHECK-NEXT:    [[BF_CLEAR32:%.*]] = and i64 [[BF_LOAD30]], -1152921504606846976
-// CHECK-NEXT:    [[BF_SET33:%.*]] = or i64 [[BF_CLEAR32]], [[BF_VALUE31]]
-// CHECK-NEXT:    store i64 [[BF_SET33]], ptr [[B22]], align 1
-// CHECK-NEXT:    [[CONV34:%.*]] = sitofp i32 [[TMP2]] to float
-// CHECK-NEXT:    store float [[CONV34]], ptr [[GEP26]], align 4
-// CHECK-NEXT:    [[CONV35:%.*]] = trunc i32 [[TMP2]] to i16
-// CHECK-NEXT:    [[BF_LOAD36:%.*]] = load i16, ptr [[D23]], align 1
-// CHECK-NEXT:    [[BF_VALUE37:%.*]] = and i16 [[CONV35]], 1023
-// CHECK-NEXT:    [[BF_CLEAR38:%.*]] = and i16 [[BF_LOAD36]], -1024
-// CHECK-NEXT:    [[BF_SET39:%.*]] = or i16 [[BF_CLEAR38]], [[BF_VALUE37]]
-// CHECK-NEXT:    store i16 [[BF_SET39]], ptr [[D23]], align 1
-// CHECK-NEXT:    [[CONV40:%.*]] = trunc i32 [[TMP2]] to i16
-// CHECK-NEXT:    [[BF_LOAD41:%.*]] = load i16, ptr [[E24]], align 1
-// CHECK-NEXT:    [[BF_VALUE42:%.*]] = and i16 [[CONV40]], 63
-// CHECK-NEXT:    [[BF_SHL43:%.*]] = shl i16 [[BF_VALUE42]], 10
-// CHECK-NEXT:    [[BF_CLEAR44:%.*]] = and i16 [[BF_LOAD41]], 1023
-// CHECK-NEXT:    [[BF_SET45:%.*]] = or i16 [[BF_CLEAR44]], [[BF_SHL43]]
-// CHECK-NEXT:    store i16 [[BF_SET45]], ptr [[E24]], align 1
-// CHECK-NEXT:    [[CONV46:%.*]] = sitofp i32 [[TMP2]] to double
-// CHECK-NEXT:    store double [[CONV46]], ptr [[GEP27]], align 8
-// CHECK-NEXT:    store i32 [[TMP2]], ptr [[GEP28]], align 4
-// CHECK-NEXT:    [[B47:%.*]] = getelementptr inbounds nuw [[STRUCT_MOREBFIELDS]], ptr [[REF_TMP20]], i32 0, i32 1
-// CHECK-NEXT:    [[BF_LOAD48:%.*]] = load i64, ptr [[B47]], align 1
-// CHECK-NEXT:    [[BF_CLEAR49:%.*]] = and i64 [[BF_LOAD48]], 1152921504606846975
-// CHECK-NEXT:    [[BF_LOAD50:%.*]] = load i64, ptr [[B19]], align 1
-// CHECK-NEXT:    [[BF_VALUE51:%.*]] = and i64 [[BF_CLEAR49]], 1152921504606846975
-// CHECK-NEXT:    [[BF_CLEAR52:%.*]] = and i64 [[BF_LOAD50]], -1152921504606846976
-// CHECK-NEXT:    [[BF_SET53:%.*]] = or i64 [[BF_CLEAR52]], [[BF_VALUE51]]
-// CHECK-NEXT:    store i64 [[BF_SET53]], ptr [[B19]], align 1
+// CHECK-NEXT:    [[B20:%.*]] = getelementptr inbounds nuw [[STRUCT_MOREBFIELDS]], ptr [[REF_TMP]], i32 0, i32 1
+// CHECK-NEXT:    [[BF_LOAD21:%.*]] = load i64, ptr [[B20]], align 1
+// CHECK-NEXT:    [[BF_CLEAR22:%.*]] = and i64 [[BF_LOAD21]], 1152921504606846975
+// CHECK-NEXT:    [[BF_LOAD23:%.*]] = load i64, ptr [[B19]], align 1
+// CHECK-NEXT:    [[BF_VALUE24:%.*]] = and i64 [[BF_CLEAR22]], 1152921504606846975
+// CHECK-NEXT:    [[BF_CLEAR25:%.*]] = and i64 [[BF_LOAD23]], -1152921504606846976
+// CHECK-NEXT:    [[BF_SET26:%.*]] = or i64 [[BF_CLEAR25]], [[BF_VALUE24]]
+// CHECK-NEXT:    store i64 [[BF_SET26]], ptr [[B19]], align 1
 // CHECK-NEXT:    [[C:%.*]] = getelementptr inbounds nuw [[STRUCT_MOREBFIELDS]], ptr [[MBF]], i32 0, i32 2
-// CHECK-NEXT:    [[TMP3:%.*]] = load i32, ptr [[A_ADDR]], align 4
-// CHECK-NEXT:    [[GEP55:%.*]] = getelementptr inbounds [[STRUCT_MOREBFIELDS]], ptr [[REF_TMP54]], i32 0
-// CHECK-NEXT:    [[B56:%.*]] = getelementptr inbounds nuw [[STRUCT_MOREBFIELDS]], ptr [[GEP55]], i32 0, i32 1
-// CHECK-NEXT:    [[D57:%.*]] = getelementptr inbounds nuw [[STRUCT_MOREBFIELDS]], ptr [[GEP55]], i32 0, i32 3
-// CHECK-NEXT:    [[E58:%.*]] = getelementptr inbounds nuw [[STRUCT_MOREBFIELDS]], ptr [[GEP55]], i32 0, i32 3
-// CHECK-NEXT:    [[GEP59:%.*]] = getelementptr inbounds [[STRUCT_MOREBFIELDS]], ptr [[REF_TMP54]], i32 0, i32 0
-// CHECK-NEXT:    [[GEP60:%.*]] = getelementptr inbounds [[STRUCT_MOREBFIELDS]], ptr [[REF_TMP54]], i32 0, i32 2
-// CHECK-NEXT:    [[GEP61:%.*]] = getelementptr inbounds [[STRUCT_MOREBFIELDS]], ptr [[REF_TMP54]], i32 0, i32 5
-// CHECK-NEXT:    [[GEP62:%.*]] = getelementptr inbounds [[STRUCT_MOREBFIELDS]], ptr [[REF_TMP54]], i32 0, i32 7
-// CHECK-NEXT:    store i32 [[TMP3]], ptr [[GEP59]], align 4
-// CHECK-NEXT:    [[CONV63:%.*]] = sext i32 [[TMP3]] to i64
-// CHECK-NEXT:    [[BF_LOAD64:%.*]] = load i64, ptr [[B56]], align 1
-// CHECK-NEXT:    [[BF_VALUE65:%.*]] = and i64 [[CONV63]], 1152921504606846975
-// CHECK-NEXT:    [[BF_CLEAR66:%.*]] = and i64 [[BF_LOAD64]], -1152921504606846976
-// CHECK-NEXT:    [[BF_SET67:%.*]] = or i64 [[BF_CLEAR66]], [[BF_VALUE65]]
-// CHECK-NEXT:    store i64 [[BF_SET67]], ptr [[B56]], align 1
-// CHECK-NEXT:    [[CONV68:%.*]] = sitofp i32 [[TMP3]] to float
-// CHECK-NEXT:    store float [[CONV68]], ptr [[GEP60]], align 4
-// CHECK-NEXT:    [[CONV69:%.*]] = trunc i32 [[TMP3]] to i16
-// CHECK-NEXT:    [[BF_LOAD70:%.*]] = load i16, ptr [[D57]], align 1
-// CHECK-NEXT:    [[BF_VALUE71:%.*]] = and i16 [[CONV69]], 1023
-// CHECK-NEXT:    [[BF_CLEAR72:%.*]] = and i16 [[BF_LOAD70]], -1024
-// CHECK-NEXT:    [[BF_SET73:%.*]] = or i16 [[BF_CLEAR72]], [[BF_VALUE71]]
-// CHECK-NEXT:    store i16 [[BF_SET73]], ptr [[D57]], align 1
-// CHECK-NEXT:    [[CONV74:%.*]] = trunc i32 [[TMP3]] to i16
-// CHECK-NEXT:    [[BF_LOAD75:%.*]] = load i16, ptr [[E58]], align 1
-// CHECK-NEXT:    [[BF_VALUE76:%.*]] = and i16 [[CONV74]], 63
-// CHECK-NEXT:    [[BF_SHL77:%.*]] = shl i16 [[BF_VALUE76]], 10
-// CHECK-NEXT:    [[BF_CLEAR78:%.*]] = and i16 [[BF_LOAD75]], 1023
-// CHECK-NEXT:    [[BF_SET79:%.*]] = or i16 [[BF_CLEAR78]], [[BF_SHL77]]
-// CHECK-NEXT:    store i16 [[BF_SET79]], ptr [[E58]], align 1
-// CHECK-NEXT:    [[CONV80:%.*]] = sitofp i32 [[TMP3]] to double
-// CHECK-NEXT:    store double [[CONV80]], ptr [[GEP61]], align 8
-// CHECK-NEXT:    store i32 [[TMP3]], ptr [[GEP62]], align 4
-// CHECK-NEXT:    [[C81:%.*]] = getelementptr inbounds nuw [[STRUCT_MOREBFIELDS]], ptr [[REF_TMP54]], i32 0, i32 2
-// CHECK-NEXT:    [[TMP4:%.*]] = load float, ptr [[C81]], align 1
-// CHECK-NEXT:    store float [[TMP4]], ptr [[C]], align 1
-// CHECK-NEXT:    [[D82:%.*]] = getelementptr inbounds nuw [[STRUCT_MOREBFIELDS]], ptr [[MBF]], i32 0, i32 3
-// CHECK-NEXT:    [[TMP5:%.*]] = load i32, ptr [[A_ADDR]], align 4
-// CHECK-NEXT:    [[GEP84:%.*]] = getelementptr inbounds [[STRUCT_MOREBFIELDS]], ptr [[REF_TMP83]], i32 0
-// CHECK-NEXT:    [[B85:%.*]] = getelementptr inbounds nuw [[STRUCT_MOREBFIELDS]], ptr [[GEP84]], i32 0, i32 1
-// CHECK-NEXT:    [[D86:%.*]] = getelementptr inbounds nuw [[STRUCT_MOREBFIELDS]], ptr [[GEP84]], i32 0, i32 3
-// CHECK-NEXT:    [[E87:%.*]] = getelementptr inbounds nuw [[STRUCT_MOREBFIELDS]], ptr [[GEP84]], i32 0, i32 3
-// CHECK-NEXT:    [[GEP88:%.*]] = getelementptr inbounds [[STRUCT_MOREBFIELDS]], ptr [[REF_TMP83]], i32 0, i32 0
-// CHECK-NEXT:    [[GEP89:%.*]] = getelementptr inbounds [[STRUCT_MOREBFIELDS]], ptr [[REF_TMP83]], i32 0, i32 2
-// CHECK-NEXT:    [[GEP90:%.*]] = getelementptr inbounds [[STRUCT_MOREBFIELDS]], ptr [[REF_TMP83]], i32 0, i32 5
-// CHECK-NEXT:    [[GEP91:%.*]] = getelementptr inbounds [[STRUCT_MOREBFIELDS]], ptr [[REF_TMP83]], i32 0, i32 7
-// CHECK-NEXT:    store i32 [[TMP5]], ptr [[GEP88]], align 4
-// CHECK-NEXT:    [[CONV92:%.*]] = sext i32 [[TMP5]] to i64
-// CHECK-NEXT:    [[BF_LOAD93:%.*]] = load i64, ptr [[B85]], align 1
-// CHECK-NEXT:    [[BF_VALUE94:%.*]] = and i64 [[CONV92]], 1152921504606846975
-// CHECK-NEXT:    [[BF_CLEAR95:%.*]] = and i64 [[BF_LOAD93]], -1152921504606846976
-// CHECK-NEXT:    [[BF_SET96:%.*]] = or i64 [[BF_CLEAR95]], [[BF_VALUE94]]
-// CHECK-NEXT:    store i64 [[BF_SET96]], ptr [[B85]], align 1
-// CHECK-NEXT:    [[CONV97:%.*]] = sitofp i32 [[TMP5]] to float
-// CHECK-NEXT:    store float [[CONV97]], ptr [[GEP89]], align 4
-// CHECK-NEXT:    [[CONV98:%.*]] = trunc i32 [[TMP5]] to i16
-// CHECK-NEXT:    [[BF_LOAD99:%.*]] = load i16, ptr [[D86]], align 1
-// CHECK-NEXT:    [[BF_VALUE100:%.*]] = and i16 [[CONV98]], 1023
-// CHECK-NEXT:    [[BF_CLEAR101:%.*]] = and i16 [[BF_LOAD99]], -1024
-// CHECK-NEXT:    [[BF_SET102:%.*]] = or i16 [[BF_CLEAR101]], [[BF_VALUE100]]
-// CHECK-NEXT:    store i16 [[BF_SET102]], ptr [[D86]], align 1
-// CHECK-NEXT:    [[CONV103:%.*]] = trunc i32 [[TMP5]] to i16
-// CHECK-NEXT:    [[BF_LOAD104:%.*]] = load i16, ptr [[E87]], align 1
-// CHECK-NEXT:    [[BF_VALUE105:%.*]] = and i16 [[CONV103]], 63
-// CHECK-NEXT:    [[BF_SHL106:%.*]] = shl i16 [[BF_VALUE105]], 10
-// CHECK-NEXT:    [[BF_CLEAR107:%.*]] = and i16 [[BF_LOAD104]], 1023
-// CHECK-NEXT:    [[BF_SET108:%.*]] = or i16 [[BF_CLEAR107]], [[BF_SHL106]]
-// CHECK-NEXT:    store i16 [[BF_SET108]], ptr [[E87]], align 1
-// CHECK-NEXT:    [[CONV109:%.*]] = sitofp i32 [[TMP5]] to double
-// CHECK-NEXT:    store double [[CONV109]], ptr [[GEP90]], align 8
-// CHECK-NEXT:    store i32 [[TMP5]], ptr [[GEP91]], align 4
-// CHECK-NEXT:    [[D110:%.*]] = getelementptr inbounds nuw [[STRUCT_MOREBFIELDS]], ptr [[REF_TMP83]], i32 0, i32 3
-// CHECK-NEXT:    [[BF_LOAD111:%.*]] = load i16, ptr [[D110]], align 1
-// CHECK-NEXT:    [[BF_CLEAR112:%.*]] = and i16 [[BF_LOAD111]], 1023
-// CHECK-NEXT:    [[BF_LOAD113:%.*]] = load i16, ptr [[D82]], align 1
-// CHECK-NEXT:    [[BF_VALUE114:%.*]] = and i16 [[BF_CLEAR112]], 1023
-// CHECK-NEXT:    [[BF_CLEAR115:%.*]] = and i16 [[BF_LOAD113]], -1024
-// CHECK-NEXT:    [[BF_SET116:%.*]] = or i16 [[BF_CLEAR115]], [[BF_VALUE114]]
-// CHECK-NEXT:    store i16 [[BF_SET116]], ptr [[D82]], align 1
-// CHECK-NEXT:    [[E117:%.*]] = getelementptr inbounds nuw [[STRUCT_MOREBFIELDS]], ptr [[MBF]], i32 0, i32 3
-// CHECK-NEXT:    [[TMP6:%.*]] = load i32, ptr [[A_ADDR]], align 4
-// CHECK-NEXT:    [[GEP119:%.*]] = getelementptr inbounds [[STRUCT_MOREBFIELDS]], ptr [[REF_TMP118]], i32 0
-// CHECK-NEXT:    [[B120:%.*]] = getelementptr inbounds nuw [[STRUCT_MOREBFIELDS]], ptr [[GEP119]], i32 0, i32 1
-// CHECK-NEXT:    [[D121:%.*]] = getelementptr inbounds nuw [[STRUCT_MOREBFIELDS]], ptr [[GEP119]], i32 0, i32 3
-// CHECK-NEXT:    [[E122:%.*]] = getelementptr inbounds nuw [[STRUCT_MOREBFIELDS]], ptr [[GEP119]], i32 0, i32 3
-// CHECK-NEXT:    [[GEP123:%.*]] = getelementptr inbounds [[STRUCT_MOREBFIELDS]], ptr [[REF_TMP118]], i32 0, i32 0
-// CHECK-NEXT:    [[GEP124:%.*]] = getelementptr inbounds [[STRUCT_MOREBFIELDS]], ptr [[REF_TMP118]], i32 0, i32 2
-// CHECK-NEXT:    [[GEP125:%.*]] = getelementptr inbounds [[STRUCT_MOREBFIELDS]], ptr [[REF_TMP118]], i32 0, i32 5
-// CHECK-NEXT:    [[GEP126:%.*]] = getelementptr inbounds [[STRUCT_MOREBFIELDS]], ptr [[REF_TMP118]], i32 0, i32 7
-// CHECK-NEXT:    store i32 [[TMP6]], ptr [[GEP123]], align 4
-// CHECK-NEXT:    [[CONV127:%.*]] = sext i32 [[TMP6]] to i64
-// CHECK-NEXT:    [[BF_LOAD128:%.*]] = load i64, ptr [[B120]], align 1
-// CHECK-NEXT:    [[BF_VALUE129:%.*]] = and i64 [[CONV127]], 1152921504606846975
-// CHECK-NEXT:    [[BF_CLEAR130:%.*]] = and i64 [[BF_LOAD128]], -1152921504606846976
-// CHECK-NEXT:    [[BF_SET131:%.*]] = or i64 [[BF_CLEAR130]], [[BF_VALUE129]]
-// CHECK-NEXT:    store i64 [[BF_SET131]], ptr [[B120]], align 1
-// CHECK-NEXT:    [[CONV132:%.*]] = sitofp i32 [[TMP6]] to float
-// CHECK-NEXT:    store float [[CONV132]], ptr [[GEP124]], align 4
-// CHECK-NEXT:    [[CONV133:%.*]] = trunc i32 [[TMP6]] to i16
-// CHECK-NEXT:    [[BF_LOAD134:%.*]] = load i16, ptr [[D121]], align 1
-// CHECK-NEXT:    [[BF_VALUE135:%.*]] = and i16 [[CONV133]], 1023
-// CHECK-NEXT:    [[BF_CLEAR136:%.*]] = and i16 [[BF_LOAD134]], -1024
-// CHECK-NEXT:    [[BF_SET137:%.*]] = or i16 [[BF_CLEAR136]], [[BF_VALUE135]]
-// CHECK-NEXT:    store i16 [[BF_SET137]], ptr [[D121]], align 1
-// CHECK-NEXT:    [[CONV138:%.*]] = trunc i32 [[TMP6]] to i16
-// CHECK-NEXT:    [[BF_LOAD139:%.*]] = load i16, ptr [[E122]], align 1
-// CHECK-NEXT:    [[BF_VALUE140:%.*]] = and i16 [[CONV138]], 63
-// CHECK-NEXT:    [[BF_SHL141:%.*]] = shl i16 [[BF_VALUE140]], 10
-// CHECK-NEXT:    [[BF_CLEAR142:%.*]] = and i16 [[BF_LOAD139]], 1023
-// CHECK-NEXT:    [[BF_SET143:%.*]] = or i16 [[BF_CLEAR142]], [[BF_SHL141]]
-// CHECK-NEXT:    store i16 [[BF_SET143]], ptr [[E122]], align 1
-// CHECK-NEXT:    [[CONV144:%.*]] = sitofp i32 [[TMP6]] to double
-// CHECK-NEXT:    store double [[CONV144]], ptr [[GEP125]], align 8
-// CHECK-NEXT:    store i32 [[TMP6]], ptr [[GEP126]], align 4
-// CHECK-NEXT:    [[E145:%.*]] = getelementptr inbounds nuw [[STRUCT_MOREBFIELDS]], ptr [[REF_TMP118]], i32 0, i32 3
-// CHECK-NEXT:    [[BF_LOAD146:%.*]] = load i16, ptr [[E145]], align 1
-// CHECK-NEXT:    [[BF_LSHR:%.*]] = lshr i16 [[BF_LOAD146]], 10
-// CHECK-NEXT:    [[BF_LOAD147:%.*]] = load i16, ptr [[E117]], align 1
-// CHECK-NEXT:    [[BF_VALUE148:%.*]] = and i16 [[BF_LSHR]], 63
-// CHECK-NEXT:    [[BF_SHL149:%.*]] = shl i16 [[BF_VALUE148]], 10
-// CHECK-NEXT:    [[BF_CLEAR150:%.*]] = and i16 [[BF_LOAD147]], 1023
-// CHECK-NEXT:    [[BF_SET151:%.*]] = or i16 [[BF_CLEAR150]], [[BF_SHL149]]
-// CHECK-NEXT:    store i16 [[BF_SET151]], ptr [[E117]], align 1
+// CHECK-NEXT:    [[C27:%.*]] = getelementptr inbounds nuw [[STRUCT_MOREBFIELDS]], ptr [[REF_TMP]], i32 0, i32 2
+// CHECK-NEXT:    [[TMP2:%.*]] = load float, ptr [[C27]], align 1
+// CHECK-NEXT:    store float [[TMP2]], ptr [[C]], align 1
+// CHECK-NEXT:    [[D28:%.*]] = getelementptr inbounds nuw [[STRUCT_MOREBFIELDS]], ptr [[MBF]], i32 0, i32 3
+// CHECK-NEXT:    [[D29:%.*]] = getelementptr inbounds nuw [[STRUCT_MOREBFIELDS]], ptr [[REF_TMP]], i32 0, i32 3
+// CHECK-NEXT:    [[BF_LOAD30:%.*]] = load i16, ptr [[D29]], align 1
+// CHECK-NEXT:    [[BF_CLEAR31:%.*]] = and i16 [[BF_LOAD30]], 1023
+// CHECK-NEXT:    [[BF_LOAD32:%.*]] = load i16, ptr [[D28]], align 1
+// CHECK-NEXT:    [[BF_VALUE33:%.*]] = and i16 [[BF_CLEAR31]], 1023
+// CHECK-NEXT:    [[BF_CLEAR34:%.*]] = and i16 [[BF_LOAD32]], -1024
+// CHECK-NEXT:    [[BF_SET35:%.*]] = or i16 [[BF_CLEAR34]], [[BF_VALUE33]]
+// CHECK-NEXT:    store i16 [[BF_SET35]], ptr [[D28]], align 1
+// CHECK-NEXT:    [[E36:%.*]] = getelementptr inbounds nuw [[STRUCT_MOREBFIELDS]], ptr [[MBF]], i32 0, i32 3
+// CHECK-NEXT:    [[E37:%.*]] = getelementptr inbounds nuw [[STRUCT_MOREBFIELDS]], ptr [[REF_TMP]], i32 0, i32 3
+// CHECK-NEXT:    [[BF_LOAD38:%.*]] = load i16, ptr [[E37]], align 1
+// CHECK-NEXT:    [[BF_LSHR:%.*]] = lshr i16 [[BF_LOAD38]], 10
+// CHECK-NEXT:    [[BF_LOAD39:%.*]] = load i16, ptr [[E36]], align 1
+// CHECK-NEXT:    [[BF_VALUE40:%.*]] = and i16 [[BF_LSHR]], 63
+// CHECK-NEXT:    [[BF_SHL41:%.*]] = shl i16 [[BF_VALUE40]], 10
+// CHECK-NEXT:    [[BF_CLEAR42:%.*]] = and i16 [[BF_LOAD39]], 1023
+// CHECK-NEXT:    [[BF_SET43:%.*]] = or i16 [[BF_CLEAR42]], [[BF_SHL41]]
+// CHECK-NEXT:    store i16 [[BF_SET43]], ptr [[E36]], align 1
 // CHECK-NEXT:    [[F:%.*]] = getelementptr inbounds nuw [[STRUCT_MOREBFIELDS]], ptr [[MBF]], i32 0, i32 5
-// CHECK-NEXT:    [[TMP7:%.*]] = load i32, ptr [[A_ADDR]], align 4
-// CHECK-NEXT:    [[GEP153:%.*]] = getelementptr inbounds [[STRUCT_MOREBFIELDS]], ptr [[REF_TMP152]], i32 0
-// CHECK-NEXT:    [[B154:%.*]] = getelementptr inbounds nuw [[STRUCT_MOREBFIELDS]], ptr [[GEP153]], i32 0, i32 1
-// CHECK-NEXT:    [[D155:%.*]] = getelementptr inbounds nuw [[STRUCT_MOREBFIELDS]], ptr [[GEP153]], i32 0, i32 3
-// CHECK-NEXT:    [[E156:%.*]] = getelementptr inbounds nuw [[STRUCT_MOREBFIELDS]], ptr [[GEP153]], i32 0, i32 3
-// CHECK-NEXT:    [[GEP157:%.*]] = getelementptr inbounds [[STRUCT_MOREBFIELDS]], ptr [[REF_TMP152]], i32 0, i32 0
-// CHECK-NEXT:    [[GEP158:%.*]] = getelementptr inbounds [[STRUCT_MOREBFIELDS]], ptr [[REF_TMP152]], i32 0, i32 2
-// CHECK-NEXT:    [[GEP159:%.*]] = getelementptr inbounds [[STRUCT_MOREBFIELDS]], ptr [[REF_TMP152]], i32 0, i32 5
-// CHECK-NEXT:    [[GEP160:%.*]] = getelementptr inbounds [[STRUCT_MOREBFIELDS]], ptr [[REF_TMP152]], i32 0, i32 7
-// CHECK-NEXT:    store i32 [[TMP7]], ptr [[GEP157]], align 4
-// CHECK-NEXT:    [[CONV161:%.*]] = sext i32 [[TMP7]] to i64
-// CHECK-NEXT:    [[BF_LOAD162:%.*]] = load i64, ptr [[B154]], align 1
-// CHECK-NEXT:    [[BF_VALUE163:%.*]] = and i64 [[CONV161]], 1152921504606846975
-// CHECK-NEXT:    [[BF_CLEAR164:%.*]] = and i64 [[BF_LOAD162]], -1152921504606846976
-// CHECK-NEXT:    [[BF_SET165:%.*]] = or i64 [[BF_CLEAR164]], [[BF_VALUE163]]
-// CHECK-NEXT:    store i64 [[BF_SET165]], ptr [[B154]], align 1
-// CHECK-NEXT:    [[CONV166:%.*]] = sitofp i32 [[TMP7]] to float
-// CHECK-NEXT:    store float [[CONV166]], ptr [[GEP158]], align 4
-// CHECK-NEXT:    [[CONV167:%.*]] = trunc i32 [[TMP7]] to i16
-// CHECK-NEXT:    [[BF_LOAD168:%.*]] = load i16, ptr [[D155]], align 1
-// CHECK-NEXT:    [[BF_VALUE169:%.*]] = and i16 [[CONV167]], 1023
-// CHECK-NEXT:    [[BF_CLEAR170:%.*]] = and i16 [[BF_LOAD168]], -1024
-// CHECK-NEXT:    [[BF_SET171:%.*]] = or i16 [[BF_CLEAR170]], [[BF_VALUE169]]
-// CHECK-NEXT:    store i16 [[BF_SET171]], ptr [[D155]], align 1
-// CHECK-NEXT:    [[CONV172:%.*]] = trunc i32 [[TMP7]] to i16
-// CHECK-NEXT:    [[BF_LOAD173:%.*]] = load i16, ptr [[E156]], align 1
-// CHECK-NEXT:    [[BF_VALUE174:%.*]] = and i16 [[CONV172]], 63
-// CHECK-NEXT:    [[BF_SHL175:%.*]] = shl i16 [[BF_VALUE174]], 10
-// CHECK-NEXT:    [[BF_CLEAR176:%.*]] = and i16 [[BF_LOAD173]], 1023
-// CHECK-NEXT:    [[BF_SET177:%.*]] = or i16 [[BF_CLEAR176]], [[BF_SHL175]]
-// CHECK-NEXT:    store i16 [[BF_SET177]], ptr [[E156]], align 1
-// CHECK-NEXT:    [[CONV178:%.*]] = sitofp i32 [[TMP7]] to double
-// CHECK-NEXT:    store double [[CONV178]], ptr [[GEP159]], align 8
-// CHECK-NEXT:    store i32 [[TMP7]], ptr [[GEP160]], align 4
-// CHECK-NEXT:    [[F179:%.*]] = getelementptr inbounds nuw [[STRUCT_MOREBFIELDS]], ptr [[REF_TMP152]], i32 0, i32 5
-// CHECK-NEXT:    [[TMP8:%.*]] = load double, ptr [[F179]], align 1
-// CHECK-NEXT:    store double [[TMP8]], ptr [[F]], align 1
+// CHECK-NEXT:    [[F44:%.*]] = getelementptr inbounds nuw [[STRUCT_MOREBFIELDS]], ptr [[REF_TMP]], i32 0, i32 5
+// CHECK-NEXT:    [[TMP3:%.*]] = load double, ptr [[F44]], align 1
+// CHECK-NEXT:    store double [[TMP3]], ptr [[F]], align 1
 // CHECK-NEXT:    [[G:%.*]] = getelementptr inbounds nuw [[STRUCT_MOREBFIELDS]], ptr [[MBF]], i32 0, i32 7
-// CHECK-NEXT:    [[TMP9:%.*]] = load i32, ptr [[A_ADDR]], align 4
-// CHECK-NEXT:    [[GEP181:%.*]] = getelementptr inbounds [[STRUCT_MOREBFIELDS]], ptr [[REF_TMP180]], i32 0
-// CHECK-NEXT:    [[B182:%.*]] = getelementptr inbounds nuw [[STRUCT_MOREBFIELDS]], ptr [[GEP181]], i32 0, i32 1
-// CHECK-NEXT:    [[D183:%.*]] = getelementptr inbounds nuw [[STRUCT_MOREBFIELDS]], ptr [[GEP181]], i32 0, i32 3
-// CHECK-NEXT:    [[E184:%.*]] = getelementptr inbounds nuw [[STRUCT_MOREBFIELDS]], ptr [[GEP181]], i32 0, i32 3
-// CHECK-NEXT:    [[GEP185:%.*]] = getelementptr inbounds [[STRUCT_MOREBFIELDS]], ptr [[REF_TMP180]], i32 0, i32 0
-// CHECK-NEXT:    [[GEP186:%.*]] = getelementptr inbounds [[STRUCT_MOREBFIELDS]], ptr [[REF_TMP180]], i32 0, i32 2
-// CHECK-NEXT:    [[GEP187:%.*]] = getelementptr inbounds [[STRUCT_MOREBFIELDS]], ptr [[REF_TMP180]], i32 0, i32 5
-// CHECK-NEXT:    [[GEP188:%.*]] = getelementptr inbounds [[STRUCT_MOREBFIELDS]], ptr [[REF_TMP180]], i32 0, i32 7
-// CHECK-NEXT:    store i32 [[TMP9]], ptr [[GEP185]], align 4
-// CHECK-NEXT:    [[CONV189:%.*]] = sext i32 [[TMP9]] to i64
-// CHECK-NEXT:    [[BF_LOAD190:%.*]] = load i64, ptr [[B182]], align 1
-// CHECK-NEXT:    [[BF_VALUE191:%.*]] = and i64 [[CONV189]], 1152921504606846975
-// CHECK-NEXT:    [[BF_CLEAR192:%.*]] = and i64 [[BF_LOAD190]], -1152921504606846976
-// CHECK-NEXT:    [[BF_SET193:%.*]] = or i64 [[BF_CLEAR192]], [[BF_VALUE191]]
-// CHECK-NEXT:    store i64 [[BF_SET193]], ptr [[B182]], align 1
-// CHECK-NEXT:    [[CONV194:%.*]] = sitofp i32 [[TMP9]] to float
-// CHECK-NEXT:    store float [[CONV194]], ptr [[GEP186]], align 4
-// CHECK-NEXT:    [[CONV195:%.*]] = trunc i32 [[TMP9]] to i16
-// CHECK-NEXT:    [[BF_LOAD196:%.*]] = load i16, ptr [[D183]], align 1
-// CHECK-NEXT:    [[BF_VALUE197:%.*]] = and i16 [[CONV195]], 1023
-// CHECK-NEXT:    [[BF_CLEAR198:%.*]] = and i16 [[BF_LOAD196]], -1024
-// CHECK-NEXT:    [[BF_SET199:%.*]] = or i16 [[BF_CLEAR198]], [[BF_VALUE197]]
-// CHECK-NEXT:    store i16 [[BF_SET199]], ptr [[D183]], align 1
-// CHECK-NEXT:    [[CONV200:%.*]] = trunc i32 [[TMP9]] to i16
-// CHECK-NEXT:    [[BF_LOAD201:%.*]] = load i16, ptr [[E184]], align 1
-// CHECK-NEXT:    [[BF_VALUE202:%.*]] = and i16 [[CONV200]], 63
-// CHECK-NEXT:    [[BF_SHL203:%.*]] = shl i16 [[BF_VALUE202]], 10
-// CHECK-NEXT:    [[BF_CLEAR204:%.*]] = and i16 [[BF_LOAD201]], 1023
-// CHECK-NEXT:    [[BF_SET205:%.*]] = or i16 [[BF_CLEAR204]], [[BF_SHL203]]
-// CHECK-NEXT:    store i16 [[BF_SET205]], ptr [[E184]], align 1
-// CHECK-NEXT:    [[CONV206:%.*]] = sitofp i32 [[TMP9]] to double
-// CHECK-NEXT:    store double [[CONV206]], ptr [[GEP187]], align 8
-// CHECK-NEXT:    store i32 [[TMP9]], ptr [[GEP188]], align 4
-// CHECK-NEXT:    [[G207:%.*]] = getelementptr inbounds nuw [[STRUCT_MOREBFIELDS]], ptr [[REF_TMP180]], i32 0, i32 7
-// CHECK-NEXT:    [[TMP10:%.*]] = load i32, ptr [[G207]], align 1
-// CHECK-NEXT:    store i32 [[TMP10]], ptr [[G]], align 1
+// CHECK-NEXT:    [[G45:%.*]] = getelementptr inbounds nuw [[STRUCT_MOREBFIELDS]], ptr [[REF_TMP]], i32 0, i32 7
+// CHECK-NEXT:    [[TMP4:%.*]] = load i32, ptr [[G45]], align 1
+// CHECK-NEXT:    store i32 [[TMP4]], ptr [[G]], align 1
 // CHECK-NEXT:    ret void
 //
 void call13(int A) {
@@ -895,66 +511,40 @@ struct Outer {
 // CHECK-NEXT:    [[A_ADDR:%.*]] = alloca i32, align 4
 // CHECK-NEXT:    [[O:%.*]] = alloca [[STRUCT_OUTER:%.*]], align 1
 // CHECK-NEXT:    [[REF_TMP:%.*]] = alloca [[STRUCT_OUTER]], align 1
-// CHECK-NEXT:    [[REF_TMP5:%.*]] = alloca [[STRUCT_OUTER]], align 1
-// CHECK-NEXT:    [[REF_TMP17:%.*]] = alloca [[STRUCT_OUTER]], align 1
 // CHECK-NEXT:    store i32 [[A]], ptr [[A_ADDR]], align 4
-// CHECK-NEXT:    [[A1:%.*]] = getelementptr inbounds nuw [[STRUCT_OUTER]], ptr [[O]], i32 0, i32 0
 // CHECK-NEXT:    [[TMP0:%.*]] = load i32, ptr [[A_ADDR]], align 4
 // CHECK-NEXT:    [[GEP:%.*]] = getelementptr inbounds [[STRUCT_OUTER]], ptr [[REF_TMP]], i32 0, i32 0
-// CHECK-NEXT:    [[GEP2:%.*]] = getelementptr inbounds [[STRUCT_OUTER]], ptr [[REF_TMP]], i32 0, i32 1
-// CHECK-NEXT:    [[Y:%.*]] = getelementptr inbounds nuw [[STRUCT_INNER:%.*]], ptr [[GEP2]], i32 0, i32 1
-// CHECK-NEXT:    [[GEP3:%.*]] = getelementptr inbounds [[STRUCT_OUTER]], ptr [[REF_TMP]], i32 0, i32 1, i32 0
+// CHECK-NEXT:    [[GEP1:%.*]] = getelementptr inbounds [[STRUCT_OUTER]], ptr [[REF_TMP]], i32 0, i32 1
+// CHECK-NEXT:    [[Y:%.*]] = getelementptr inbounds nuw [[STRUCT_INNER:%.*]], ptr [[GEP1]], i32 0, i32 1
+// CHECK-NEXT:    [[GEP2:%.*]] = getelementptr inbounds [[STRUCT_OUTER]], ptr [[REF_TMP]], i32 0, i32 1, i32 0
 // CHECK-NEXT:    store i32 [[TMP0]], ptr [[GEP]], align 4
-// CHECK-NEXT:    store i32 [[TMP0]], ptr [[GEP3]], align 4
+// CHECK-NEXT:    store i32 [[TMP0]], ptr [[GEP2]], align 4
 // CHECK-NEXT:    [[BF_LOAD:%.*]] = load i32, ptr [[Y]], align 1
 // CHECK-NEXT:    [[BF_VALUE:%.*]] = and i32 [[TMP0]], 33554431
 // CHECK-NEXT:    [[BF_CLEAR:%.*]] = and i32 [[BF_LOAD]], -33554432
 // CHECK-NEXT:    [[BF_SET:%.*]] = or i32 [[BF_CLEAR]], [[BF_VALUE]]
 // CHECK-NEXT:    store i32 [[BF_SET]], ptr [[Y]], align 1
+// CHECK-NEXT:    [[A3:%.*]] = getelementptr inbounds nuw [[STRUCT_OUTER]], ptr [[O]], i32 0, i32 0
 // CHECK-NEXT:    [[A4:%.*]] = getelementptr inbounds nuw [[STRUCT_OUTER]], ptr [[REF_TMP]], i32 0, i32 0
 // CHECK-NEXT:    [[TMP1:%.*]] = load i32, ptr [[A4]], align 1
-// CHECK-NEXT:    store i32 [[TMP1]], ptr [[A1]], align 1
+// CHECK-NEXT:    store i32 [[TMP1]], ptr [[A3]], align 1
 // CHECK-NEXT:    [[I:%.*]] = getelementptr inbounds nuw [[STRUCT_OUTER]], ptr [[O]], i32 0, i32 1
 // CHECK-NEXT:    [[Z:%.*]] = getelementptr inbounds nuw [[STRUCT_INNER]], ptr [[I]], i32 0, i32 0
-// CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[A_ADDR]], align 4
-// CHECK-NEXT:    [[GEP6:%.*]] = getelementptr inbounds [[STRUCT_OUTER]], ptr [[REF_TMP5]], i32 0, i32 0
-// CHECK-NEXT:    [[GEP7:%.*]] = getelementptr inbounds [[STRUCT_OUTER]], ptr [[REF_TMP5]], i32 0, i32 1
-// CHECK-NEXT:    [[Y8:%.*]] = getelementptr inbounds nuw [[STRUCT_INNER]], ptr [[GEP7]], i32 0, i32 1
-// CHECK-NEXT:    [[GEP9:%.*]] = getelementptr inbounds [[STRUCT_OUTER]], ptr [[REF_TMP5]], i32 0, i32 1, i32 0
-// CHECK-NEXT:    store i32 [[TMP2]], ptr [[GEP6]], align 4
-// CHECK-NEXT:    store i32 [[TMP2]], ptr [[GEP9]], align 4
-// CHECK-NEXT:    [[BF_LOAD10:%.*]] = load i32, ptr [[Y8]], align 1
-// CHECK-NEXT:    [[BF_VALUE11:%.*]] = and i32 [[TMP2]], 33554431
-// CHECK-NEXT:    [[BF_CLEAR12:%.*]] = and i32 [[BF_LOAD10]], -33554432
-// CHECK-NEXT:    [[BF_SET13:%.*]] = or i32 [[BF_CLEAR12]], [[BF_VALUE11]]
-// CHECK-NEXT:    store i32 [[BF_SET13]], ptr [[Y8]], align 1
-// CHECK-NEXT:    [[I14:%.*]] = getelementptr inbounds nuw [[STRUCT_OUTER]], ptr [[REF_TMP5]], i32 0, i32 1
-// CHECK-NEXT:    [[Z15:%.*]] = getelementptr inbounds nuw [[STRUCT_INNER]], ptr [[I14]], i32 0, i32 0
-// CHECK-NEXT:    [[TMP3:%.*]] = load i32, ptr [[Z15]], align 1
-// CHECK-NEXT:    store i32 [[TMP3]], ptr [[Z]], align 1
-// CHECK-NEXT:    [[Y16:%.*]] = getelementptr inbounds nuw [[STRUCT_INNER]], ptr [[I]], i32 0, i32 1
-// CHECK-NEXT:    [[TMP4:%.*]] = load i32, ptr [[A_ADDR]], align 4
-// CHECK-NEXT:    [[GEP18:%.*]] = getelementptr inbounds [[STRUCT_OUTER]], ptr [[REF_TMP17]], i32 0, i32 0
-// CHECK-NEXT:    [[GEP19:%.*]] = getelementptr inbounds [[STRUCT_OUTER]], ptr [[REF_TMP17]], i32 0, i32 1
-// CHECK-NEXT:    [[Y20:%.*]] = getelementptr inbounds nuw [[STRUCT_INNER]], ptr [[GEP19]], i32 0, i32 1
-// CHECK-NEXT:    [[GEP21:%.*]] = getelementptr inbounds [[STRUCT_OUTER]], ptr [[REF_TMP17]], i32 0, i32 1, i32 0
-// CHECK-NEXT:    store i32 [[TMP4]], ptr [[GEP18]], align 4
-// CHECK-NEXT:    store i32 [[TMP4]], ptr [[GEP21]], align 4
-// CHECK-NEXT:    [[BF_LOAD22:%.*]] = load i32, ptr [[Y20]], align 1
-// CHECK-NEXT:    [[BF_VALUE23:%.*]] = and i32 [[TMP4]], 33554431
-// CHECK-NEXT:    [[BF_CLEAR24:%.*]] = and i32 [[BF_LOAD22]], -33554432
-// CHECK-NEXT:    [[BF_SET25:%.*]] = or i32 [[BF_CLEAR24]], [[BF_VALUE23]]
-// CHECK-NEXT:    store i32 [[BF_SET25]], ptr [[Y20]], align 1
-// CHECK-NEXT:    [[I26:%.*]] = getelementptr inbounds nuw [[STRUCT_OUTER]], ptr [[REF_TMP17]], i32 0, i32 1
-// CHECK-NEXT:    [[Y27:%.*]] = getelementptr inbounds nuw [[STRUCT_INNER]], ptr [[I26]], i32 0, i32 1
-// CHECK-NEXT:    [[BF_LOAD28:%.*]] = load i32, ptr [[Y27]], align 1
-// CHECK-NEXT:    [[BF_SHL:%.*]] = shl i32 [[BF_LOAD28]], 7
+// CHECK-NEXT:    [[I5:%.*]] = getelementptr inbounds nuw [[STRUCT_OUTER]], ptr [[REF_TMP]], i32 0, i32 1
+// CHECK-NEXT:    [[Z6:%.*]] = getelementptr inbounds nuw [[STRUCT_INNER]], ptr [[I5]], i32 0, i32 0
+// CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[Z6]], align 1
+// CHECK-NEXT:    store i32 [[TMP2]], ptr [[Z]], align 1
+// CHECK-NEXT:    [[Y7:%.*]] = getelementptr inbounds nuw [[STRUCT_INNER]], ptr [[I]], i32 0, i32 1
+// CHECK-NEXT:    [[I8:%.*]] = getelementptr inbounds nuw [[STRUCT_OUTER]], ptr [[REF_TMP]], i32 0, i32 1
+// CHECK-NEXT:    [[Y9:%.*]] = getelementptr inbounds nuw [[STRUCT_INNER]], ptr [[I8]], i32 0, i32 1
+// CHECK-NEXT:    [[BF_LOAD10:%.*]] = load i32, ptr [[Y9]], align 1
+// CHECK-NEXT:    [[BF_SHL:%.*]] = shl i32 [[BF_LOAD10]], 7
 // CHECK-NEXT:    [[BF_ASHR:%.*]] = ashr i32 [[BF_SHL]], 7
-// CHECK-NEXT:    [[BF_LOAD29:%.*]] = load i32, ptr [[Y16]], align 1
-// CHECK-NEXT:    [[BF_VALUE30:%.*]] = and i32 [[BF_ASHR]], 33554431
-// CHECK-NEXT:    [[BF_CLEAR31:%.*]] = and i32 [[BF_LOAD29]], -33554432
-// CHECK-NEXT:    [[BF_SET32:%.*]] = or i32 [[BF_CLEAR31]], [[BF_VALUE30]]
-// CHECK-NEXT:    store i32 [[BF_SET32]], ptr [[Y16]], align 1
+// CHECK-NEXT:    [[BF_LOAD11:%.*]] = load i32, ptr [[Y7]], align 1
+// CHECK-NEXT:    [[BF_VALUE12:%.*]] = and i32 [[BF_ASHR]], 33554431
+// CHECK-NEXT:    [[BF_CLEAR13:%.*]] = and i32 [[BF_LOAD11]], -33554432
+// CHECK-NEXT:    [[BF_SET14:%.*]] = or i32 [[BF_CLEAR13]], [[BF_VALUE12]]
+// CHECK-NEXT:    store i32 [[BF_SET14]], ptr [[Y7]], align 1
 // CHECK-NEXT:    ret void
 //
 void call14(int A) {

@@ -994,8 +994,8 @@ void CGHLSLRuntime::emitEntryFunction(const FunctionDecl *FD,
         llvm::Value *Var =
             CGM.getLangOpts().EmitLogicalPointer
                 ? cast<Instruction>(
-                      B.CreateStructuredAlloca(Param.getParamByValType()))
-                : cast<Instruction>(B.CreateAlloca(Param.getParamByValType()));
+                      B.CreateStructuredAlloca(ParamType))
+                : cast<Instruction>(B.CreateAlloca(ParamType));
         B.CreateStore(SemanticValue, Var);
         SemanticValue = Var;
       }
