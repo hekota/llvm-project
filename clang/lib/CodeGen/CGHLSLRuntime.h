@@ -305,17 +305,17 @@ public:
                                AggValueSlot &DestSlot);
   std::optional<LValue>
   emitGlobalResourceArrayAsLValue(CodeGenFunction &CGF,
-                                  const VarDecl *ArrayDecl, SourceLocation Loc);
+                                  const VarDecl *ArrayDecl);
 
   std::optional<LValue> emitBufferArraySubscriptExpr(
       const ArraySubscriptExpr *E, CodeGenFunction &CGF,
       llvm::function_ref<llvm::Value *(bool Promote)> EmitIdxAfterBase);
 
-  RawAddress createBufferMatrixTempAddress(const LValue &LV, SourceLocation Loc,
+  RawAddress createBufferMatrixTempAddress(const LValue &LV,
                                            CodeGenFunction &CGF);
 
-  bool emitBufferCopy(CodeGenFunction &CGF, Address DestPtr, Address SrcPtr,
-                      QualType CType);
+  bool emitBufferCopy(CodeGenFunction &CGF, const Expr *E, const LValue &SrcLV,
+                      AggValueSlot &DestSlot);
 
   LValue emitBufferMemberExpr(CodeGenFunction &CGF, const MemberExpr *E);
   std::optional<LValue> emitResourceMemberExpr(CodeGenFunction &CGF,
@@ -357,8 +357,11 @@ private:
 
   bool initializeGlobalResourceArray(CodeGenFunction &CGF,
                                      const VarDecl *ArrayDecl,
-                                     SourceLocation Loc,
                                      AggValueSlot &DestSlot);
+
+  // TODO: is this really necessary?
+  bool emitBufferCopy(CodeGenFunction &CGF, Address DestPtr, Address SrcPtr,
+                      QualType CType);
 
   llvm::Triple::ArchType getArch();
 

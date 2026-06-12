@@ -2378,8 +2378,7 @@ LValue CodeGenFunction::EmitMatrixElementExpr(const MatrixElementExpr *E) {
     RawAddress MatAddr = Base.getAddress();
     if (getLangOpts().HLSL &&
         E->getBase()->getType().getAddressSpace() == LangAS::hlsl_constant)
-      MatAddr = CGM.getHLSLRuntime().createBufferMatrixTempAddress(
-          Base, E->getExprLoc(), *this);
+      MatAddr = CGM.getHLSLRuntime().createBufferMatrixTempAddress(Base, *this);
 
     llvm::Constant *CV =
         llvm::ConstantDataVector::get(getLLVMContext(), Indices);
@@ -2492,8 +2491,7 @@ static RValue EmitLoadOfMatrixLValue(LValue LV, SourceLocation Loc,
   // non-padded local alloca before loading.
   if (CGF.getLangOpts().HLSL &&
       LV.getType().getAddressSpace() == LangAS::hlsl_constant)
-    DestAddr =
-        CGF.CGM.getHLSLRuntime().createBufferMatrixTempAddress(LV, Loc, CGF);
+    DestAddr = CGF.CGM.getHLSLRuntime().createBufferMatrixTempAddress(LV, CGF);
 
   Address Addr = MaybeConvertMatrixAddress(DestAddr, CGF);
   LV.setAddress(Addr);
@@ -3459,8 +3457,7 @@ static LValue EmitGlobalVarDeclLValue(CodeGenFunction &CGF,
   // the initialized global resource array.
   if (CGF.getLangOpts().HLSL && VD->getType()->isHLSLResourceRecordArray()) {
     std::optional<LValue> LV =
-        CGF.CGM.getHLSLRuntime().emitGlobalResourceArrayAsLValue(
-            CGF, VD, E->getExprLoc());
+        CGF.CGM.getHLSLRuntime().emitGlobalResourceArrayAsLValue(CGF, VD);
     if (LV.has_value())
       return LV.value();
   }
@@ -5206,8 +5203,7 @@ LValue CodeGenFunction::EmitMatrixSingleSubscriptExpr(
   RawAddress MatAddr = Base.getAddress();
   if (getLangOpts().HLSL &&
       E->getBase()->getType().getAddressSpace() == LangAS::hlsl_constant)
-    MatAddr = CGM.getHLSLRuntime().createBufferMatrixTempAddress(
-        Base, E->getExprLoc(), *this);
+    MatAddr = CGM.getHLSLRuntime().createBufferMatrixTempAddress(Base, *this);
 
   return LValue::MakeMatrixRow(MaybeConvertMatrixAddress(MatAddr, *this),
                                RowIdx, E->getBase()->getType(),
@@ -6387,6 +6383,25 @@ LValue CodeGenFunction::EmitHLSLOutArgExpr(const HLSLOutArgExpr *E,
   Args.add(RValue::get(TmpAddr, *this), Ty);
   return TempLV;
 }
+
+// LValue CodeGenFunction::EmitHLSLBufferArgExpr(const Expr *E, CallArgList
+// &Args,
+//                                               QualType Ty) {
+//   assert(E->getType().getAddressSpace() == LangAS::hlsl_constant);
+
+//   LValue ArgLV = EmitCheckedLValue(E, CodeGenFunction::TCK_Load);
+
+//   Address TmpVar = CreateIRTempWithoutCast(E->getType());
+//   AggValueSlot DestSlot = AggValueSlot::forAddr(
+//       TmpVar, Qualifiers(), AggValueSlot::IsDestructed_t(true),
+//       AggValueSlot::DoesNotNeedGCBarriers, AggValueSlot::IsAliased_t(false),
+//       AggValueSlot::DoesNotOverlap);
+
+//   CGM.getHLSLRuntime().emitBufferCopy(*this, E, ArgLV, DestSlot);
+
+//   Args.add(RValue::get(TmpVar, *this), Ty);
+//   return MakeAddrLValue(TmpVar, E->getType());
+// }
 
 LValue
 CodeGenFunction::getOrCreateOpaqueLValueMapping(const OpaqueValueExpr *e) {
