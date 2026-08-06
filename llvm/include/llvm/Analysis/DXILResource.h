@@ -21,6 +21,7 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/DXILABI.h"
 #include <cstdint>
+#include <optional>
 
 namespace llvm {
 class CallInst;
@@ -402,7 +403,7 @@ public:
   };
 
 private:
-  ResourceBinding Binding;
+  std::optional<ResourceBinding> Binding;
   TargetExtType *HandleTy;
   StringRef Name;
   GlobalVariable *Symbol = nullptr;
@@ -415,16 +416,30 @@ public:
   ResourceInfo(uint32_t RecordID, uint32_t Space, uint32_t LowerBound,
                uint32_t Size, TargetExtType *HandleTy, StringRef Name = "",
                GlobalVariable *Symbol = nullptr)
-      : Binding{RecordID, Space, LowerBound, Size}, HandleTy(HandleTy),
-        Name(Name), Symbol(Symbol) {}
+      : Binding{ResourceBinding{RecordID, Space, LowerBound, Size}},
+        HandleTy(HandleTy), Name(Name), Symbol(Symbol) {}
 
-  void setBindingID(unsigned ID) { Binding.RecordID = ID; }
+  ResourceInfo(TargetExtType *HandleTy)
+      : Binding{std::nullopt}, HandleTy(HandleTy), Name(""), Symbol(nullptr) {}
+
+  bool isFromHeap() const { return !hasBinding(); }
+  bool hasBinding() const { return Binding.has_value(); }
+  void setBindingID(unsigned ID) {
+    assert(hasBinding() && "Resource does not have a binding");
+    Binding->RecordID = ID;
+  }
 
   bool hasCounter() const {
     return CounterDirection != ResourceCounterDirection::Unknown;
   }
 
-  const ResourceBinding &getBinding() const { return Binding; }
+  const ResourceBinding &getBinding() const {
+    assert(hasBinding() && "Resource does not have a binding");
+    return Binding.value();
+  }
+
+  uint32_t getSize() const { return Binding ? Binding->Size : 1; }
+
   TargetExtType *getHandleTy() const { return HandleTy; }
   StringRef getName() const { return Name; }
 
@@ -588,6 +603,16 @@ public:
   iterator_range<const_iterator> samplers() const {
     return make_range(sampler_begin(), sampler_end());
   }
+
+  // iterator srv_uav_cbuffer_begin() { return begin(); }
+  // const_iterator srv_uav_cbuffer_begin() const { return begin(); }
+  // iterator srv_uav_cbuffer_end() { return begin() + FirstSampler; }
+  // const_iterator srv_uav_cbuffer_end() const { return begin() + FirstSampler;
+  // } iterator_range<iterator> srv_uav_cbuffers() { return
+  // make_range(srv_uav_cbuffer_begin(), srv_uav_cbuffer_end()); }
+  // iterator_range<const_iterator> srv_uav_cbuffers() const {
+  //   return make_range(srv_uav_cbuffer_begin(), srv_uav_cbuffer_end());
+  // }
 
   struct call_iterator
       : iterator_adaptor_base<call_iterator, CallMapTy::iterator> {

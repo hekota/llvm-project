@@ -4326,6 +4326,20 @@ bool SemaHLSL::CheckBuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
     TheCall->setType(CounterHandleTy);
     break;
   }
+  case Builtin::BI__builtin_hlsl_resource_handlefromheap: {
+    if (SemaRef.checkArgCount(TheCall, 3) ||
+        CheckResourceHandle(&SemaRef, TheCall, 0) ||
+        CheckArgTypeMatches(&SemaRef, TheCall->getArg(1),
+                            SemaRef.getASTContext().UnsignedIntTy) ||
+        CheckArgTypeMatches(&SemaRef, TheCall->getArg(2),
+                            SemaRef.getASTContext().BoolTy))
+      return true;
+
+    // Update return type to be the attributed resource type from arg0.
+    QualType ResourceTy = TheCall->getArg(0)->getType();
+    TheCall->setType(ResourceTy);
+    break;
+  }
   case Builtin::BI__builtin_hlsl_and:
   case Builtin::BI__builtin_hlsl_or: {
     if (SemaRef.checkArgCount(TheCall, 2))

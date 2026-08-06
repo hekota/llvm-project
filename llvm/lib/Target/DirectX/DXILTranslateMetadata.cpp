@@ -92,19 +92,23 @@ static NamedMDNode *emitResourceMetadata(Module &M, DXILResourceMap &DRM,
   LLVMContext &Context = M.getContext();
 
   for (ResourceInfo &RI : DRM)
-    if (!RI.hasSymbol())
+    if (!RI.isFromHeap() && !RI.hasSymbol())
       RI.createSymbol(M,
                       DRTM[RI.getHandleTy()].createElementStruct(RI.getName()));
 
   SmallVector<Metadata *> SRVs, UAVs, CBufs, Smps;
   for (const ResourceInfo &RI : DRM.srvs())
-    SRVs.push_back(RI.getAsMetadata(M, DRTM[RI.getHandleTy()]));
+    if (!RI.isFromHeap())
+      SRVs.push_back(RI.getAsMetadata(M, DRTM[RI.getHandleTy()]));
   for (const ResourceInfo &RI : DRM.uavs())
-    UAVs.push_back(RI.getAsMetadata(M, DRTM[RI.getHandleTy()]));
+    if (!RI.isFromHeap())
+      UAVs.push_back(RI.getAsMetadata(M, DRTM[RI.getHandleTy()]));
   for (const ResourceInfo &RI : DRM.cbuffers())
-    CBufs.push_back(RI.getAsMetadata(M, DRTM[RI.getHandleTy()]));
+    if (!RI.isFromHeap())
+      CBufs.push_back(RI.getAsMetadata(M, DRTM[RI.getHandleTy()]));
   for (const ResourceInfo &RI : DRM.samplers())
-    Smps.push_back(RI.getAsMetadata(M, DRTM[RI.getHandleTy()]));
+    if (!RI.isFromHeap())
+      Smps.push_back(RI.getAsMetadata(M, DRTM[RI.getHandleTy()]));
 
   Metadata *SRVMD = SRVs.empty() ? nullptr : MDNode::get(Context, SRVs);
   Metadata *UAVMD = UAVs.empty() ? nullptr : MDNode::get(Context, UAVs);

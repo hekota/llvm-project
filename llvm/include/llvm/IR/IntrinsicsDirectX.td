@@ -19,8 +19,7 @@ def int_dx_flattened_thread_id_in_group : Intrinsic<[llvm_i32_ty], [], [IntrNoMe
 
 // Create resource handle given binding information. Returns a `target("dx.")`
 // type appropriate for the kind of resource given a register space ID, lower
-// bound and range size of the binding, as well as an index and an indicator
-// whether that index may be non-uniform.
+// bound and range size of the binding.
 def int_dx_resource_handlefrombinding
     : DefaultAttrsIntrinsic<
           [llvm_any_ty],
@@ -34,6 +33,16 @@ def int_dx_resource_handlefromimplicitbinding
     : DefaultAttrsIntrinsic<
           [llvm_any_ty],
           [llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_ptr_ty],
+          [IntrNoMem]>;
+
+// Create resource handle from a descriptor heap. Returns a `target("dx.")`
+// type appropriate for the kind of resource given a heap index, a boolean
+// indicator whether the index is for a CVB/SRV/UAV heap or a Sampler
+// heap.
+def int_dx_resource_handlefromheap
+    : DefaultAttrsIntrinsic<
+          [llvm_any_ty],
+          [llvm_i32_ty, llvm_i1_ty],
           [IntrNoMem]>;
 
 def int_dx_resource_getpointer

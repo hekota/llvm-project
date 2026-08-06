@@ -283,6 +283,9 @@ public:
   Expr *getResourceHandleExpr();
   Expr *getResourceCounterHandleExpr();
 
+  template <typename T> MemberExpr *createMemberExpr(T Base, FieldDecl *Field);
+  CXXThisExpr *createThisExpr();
+
 private:
   void createDecl();
 
@@ -292,6 +295,8 @@ private:
     if (!Method)
       createDecl();
   }
+
+  ASTContext &getASTContext() { return DeclBuilder.SemaRef.getASTContext(); }
 };
 
 TemplateParameterListBuilder::~TemplateParameterListBuilder() {
@@ -448,12 +453,8 @@ Expr *BuiltinTypeMethodBuilder::convertPlaceholder(PlaceHolder PH) {
     return getResourceHandleExpr();
   if (PH == PlaceHolder::CounterHandle)
     return getResourceCounterHandleExpr();
-  if (PH == PlaceHolder::This) {
-    ASTContext &AST = DeclBuilder.SemaRef.getASTContext();
-    return CXXThisExpr::Create(AST, SourceLocation(),
-                               Method->getFunctionObjectParameterType(),
-                               /*IsImplicit=*/true);
-  }
+  if (PH == PlaceHolder::This)
+    return createThisExpr();
 
   if (PH == PlaceHolder::LastStmt) {
     assert(!StmtsList.empty() && "no statements in the list");
@@ -615,26 +616,32 @@ void BuiltinTypeMethodBuilder::createDecl() {
 
 Expr *BuiltinTypeMethodBuilder::getResourceHandleExpr() {
   ensureCompleteDecl();
-
-  ASTContext &AST = DeclBuilder.SemaRef.getASTContext();
-  CXXThisExpr *This = CXXThisExpr::Create(
-      AST, SourceLocation(), Method->getFunctionObjectParameterType(), true);
+  CXXThisExpr *This = createThisExpr();
   FieldDecl *HandleField = DeclBuilder.getResourceHandleField();
-  return MemberExpr::CreateImplicit(AST, This, false, HandleField,
-                                    HandleField->getType(), VK_LValue,
-                                    OK_Ordinary);
+  return createMemberExpr(This, HandleField);
 }
 
 Expr *BuiltinTypeMethodBuilder::getResourceCounterHandleExpr() {
   ensureCompleteDecl();
-
-  ASTContext &AST = DeclBuilder.SemaRef.getASTContext();
-  CXXThisExpr *This = CXXThisExpr::Create(
-      AST, SourceLocation(), Method->getFunctionObjectParameterType(), true);
+  CXXThisExpr *This = createThisExpr();
   FieldDecl *HandleField = DeclBuilder.getResourceCounterHandleField();
-  return MemberExpr::CreateImplicit(AST, This, false, HandleField,
-                                    HandleField->getType(), VK_LValue,
-                                    OK_Ordinary);
+  return createMemberExpr(This, HandleField);
+}
+
+template <typename T>
+MemberExpr *BuiltinTypeMethodBuilder::createMemberExpr(T Base,
+                                                       FieldDecl *Member) {
+  ensureCompleteDecl();
+  Expr *BaseExpr = convertPlaceholder(Base);
+  return MemberExpr::CreateImplicit(getASTContext(), BaseExpr, false, Member,
+                                    Member->getType(), VK_LValue, OK_Ordinary);
+}
+
+CXXThisExpr *BuiltinTypeMethodBuilder::createThisExpr() {
+  CXXThisExpr *This =
+      CXXThisExpr::Create(getASTContext(), SourceLocation(),
+                          Method->getFunctionObjectParameterType(), true);
+  return This;
 }
 
 BuiltinTypeMethodBuilder &
@@ -694,10 +701,7 @@ BuiltinTypeMethodBuilder &BuiltinTypeMethodBuilder::concat(V Vec, S Scalar,
 }
 
 BuiltinTypeMethodBuilder &BuiltinTypeMethodBuilder::returnThis() {
-  ASTContext &AST = DeclBuilder.SemaRef.getASTContext();
-  CXXThisExpr *ThisExpr = CXXThisExpr::Create(
-      AST, SourceLocation(), Method->getFunctionObjectParameterType(),
-      /*IsImplicit=*/true);
+  CXXThisExpr *ThisExpr = createThisExpr();
   StmtsList.push_back(ThisExpr);
   return *this;
 }
@@ -794,12 +798,7 @@ BuiltinTypeMethodBuilder &
 BuiltinTypeMethodBuilder::accessFieldOnResource(T ResourceRecord,
                                                 FieldDecl *Field) {
   ensureCompleteDecl();
-  Expr *Base = convertPlaceholder(ResourceRecord);
-
-  ASTContext &AST = DeclBuilder.SemaRef.getASTContext();
-  auto *Member =
-      MemberExpr::CreateImplicit(AST, Base, /*IsArrow=*/false, Field,
-                                 Field->getType(), VK_LValue, OK_Ordinary);
+  auto *Member = createMemberExpr(ResourceRecord, Field);
   StmtsList.push_back(Member);
   return *this;
 }
@@ -823,16 +822,11 @@ void BuiltinTypeMethodBuilder::setMipsHandleField(LocalVar &ResourceRecord) {
 
   FieldDecl *HandleField = DeclBuilder.getResourceHandleField();
   Expr *ResExpr = convertPlaceholder(ResourceRecord);
-  MemberExpr *HandleMemberExpr = MemberExpr::CreateImplicit(
-      AST, ResExpr, false, HandleField, HandleField->getType(), VK_LValue,
-      OK_Ordinary);
+  MemberExpr *HandleMemberExpr = createMemberExpr(ResExpr, HandleField);
 
-  MemberExpr *MipsMemberExpr =
-      MemberExpr::CreateImplicit(AST, ResExpr, false, MipsField,
-                                 MipsField->getType(), VK_LValue, OK_Ordinary);
-  MemberExpr *MipsHandleMemberExpr = MemberExpr::CreateImplicit(
-      AST, MipsMemberExpr, false, MipsHandleField, MipsHandleField->getType(),
-      VK_LValue, OK_Ordinary);
+  MemberExpr *MipsMemberExpr = createMemberExpr(ResExpr, MipsField);
+  MemberExpr *MipsHandleMemberExpr =
+      createMemberExpr(MipsMemberExpr, MipsHandleField);
 
   Stmt *AssignStmt = BinaryOperator::Create(
       AST, MipsHandleMemberExpr, HandleMemberExpr, BO_Assign,
@@ -872,10 +866,7 @@ BuiltinTypeMethodBuilder &BuiltinTypeMethodBuilder::setFieldOnResource(
 
   Expr *HandleValueExpr = convertPlaceholder(HandleValue);
 
-  ASTContext &AST = DeclBuilder.SemaRef.getASTContext();
-  MemberExpr *HandleMemberExpr = MemberExpr::CreateImplicit(
-      AST, ResourceExpr, false, HandleField, HandleField->getType(), VK_LValue,
-      OK_Ordinary);
+  MemberExpr *HandleMemberExpr = createMemberExpr(ResourceExpr, HandleField);
   Stmt *AssignStmt = BinaryOperator::Create(
       DeclBuilder.SemaRef.getASTContext(), HandleMemberExpr, HandleValueExpr,
       BO_Assign, HandleMemberExpr->getType(), ExprValueKind::VK_PRValue,
@@ -893,11 +884,8 @@ BuiltinTypeMethodBuilder::accessCounterHandleFieldOnResource(T ResourceRecord) {
   assert(ResourceExpr->getType()->getAsCXXRecordDecl() == DeclBuilder.Record &&
          "Getting the field from the wrong resource type.");
 
-  ASTContext &AST = DeclBuilder.SemaRef.getASTContext();
   FieldDecl *HandleField = DeclBuilder.getResourceCounterHandleField();
-  MemberExpr *HandleExpr = MemberExpr::CreateImplicit(
-      AST, ResourceExpr, false, HandleField, HandleField->getType(), VK_LValue,
-      OK_Ordinary);
+  MemberExpr *HandleExpr = createMemberExpr(ResourceExpr, HandleField);
   StmtsList.push_back(HandleExpr);
   return *this;
 }
@@ -1201,6 +1189,46 @@ BuiltinTypeDeclBuilder::addDefaultHandleConstructor(AccessSpecifier Access) {
                    PH::Handle)
       .assign(PH::Handle, PH::LastStmt)
       .finalize(Access);
+}
+
+// Adds constructor that takes __hlsl_heap_resource_info:
+// Resource::Resource(__hlsl_heap_resource_info info) {
+//   __builtin_hlsl_resource_handlefromheap(info.Index, info.isSamplerHeap);
+// }
+BuiltinTypeDeclBuilder &
+BuiltinTypeDeclBuilder::addHeapResourceInfoConstructor(bool HasCounter) {
+  assert(!Record->isCompleteDefinition() && "record is already complete");
+
+  using PH = BuiltinTypeMethodBuilder::PlaceHolder;
+
+  ASTContext &AST = SemaRef.getASTContext();
+  QualType HandleType = getResourceHandleField()->getType();
+
+  QualType HeapResInfoType = lookupBuiltinType(
+      SemaRef, "__hlsl_heap_resource_info", Record->getDeclContext());
+  CXXRecordDecl *HeapResInfoDecl = HeapResInfoType->getAsCXXRecordDecl();
+
+  FieldDecl *IndexField = *HeapResInfoDecl->field_begin();
+  assert(IndexField && IndexField->getType() == AST.UnsignedIntTy &&
+         "Index field not as expected");
+  FieldDecl *IsSamplerHeapField = *(++HeapResInfoDecl->field_begin());
+  assert(IsSamplerHeapField && IsSamplerHeapField->getType() == AST.BoolTy &&
+         "IsSamplerHeap field not as expected");
+
+  auto MB = BuiltinTypeMethodBuilder(*this, "", AST.VoidTy, false, true);
+  MB.addParam("HeapResInfo", HeapResInfoType);
+  MB.callBuiltin("__builtin_hlsl_resource_handlefromheap", HandleType,
+                 PH::Handle, MB.createMemberExpr(PH::_0, IndexField),
+                 MB.createMemberExpr(PH::_0, IsSamplerHeapField))
+      .assign(PH::Handle, PH::LastStmt);
+
+  if (HasCounter) {
+    MB.callBuiltin("__builtin_hlsl_resource_counterhandlefromheap", HandleType,
+                   PH::Handle, MB.createMemberExpr(PH::_0, IndexField))
+        .assign(PH::CounterHandle, PH::LastStmt);
+  }
+
+  return MB.finalize();
 }
 
 BuiltinTypeDeclBuilder &
@@ -2276,7 +2304,11 @@ BuiltinTypeDeclBuilder &BuiltinTypeDeclBuilder::completeDefinition() {
          "Definition must be started before completing it.");
 
   Record->completeDefinition();
-  Record->setIsHLSLBuiltinRecord(true);
+
+  FieldDecl *FirstField =
+      Record->field_empty() ? nullptr : *Record->field_begin();
+  if (FirstField && FirstField->getType()->isHLSLAttributedResourceType())
+    Record->setIsHLSLBuiltinRecord(true);
   return *this;
 }
 

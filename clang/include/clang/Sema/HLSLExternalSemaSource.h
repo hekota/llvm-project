@@ -43,11 +43,15 @@ public:
 
 private:
   void defineTrivialHLSLTypes();
+  void defineInternalHLSLTypes();
   void defineHLSLVectorAlias();
   void defineHLSLMatrixAlias();
+  void defineHeapResourceInfoType();
   void defineHLSLTypesWithForwardDeclarations();
   void defineHLSLAtomicIntrinsics();
   void onCompletion(CXXRecordDecl *Record, CompletionFunction Fn);
+
+  CXXRecordDecl *HeapResourceInfoDecl = nullptr;
 };
 
 } // namespace clang

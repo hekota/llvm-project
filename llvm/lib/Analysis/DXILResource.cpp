@@ -660,7 +660,7 @@ void ResourceTypeInfo::print(raw_ostream &OS, const DataLayout &DL) const {
 GlobalVariable *ResourceInfo::createSymbol(Module &M, StructType *Ty) {
   assert(!Symbol && "Symbol has already been created");
   Type *ResTy = Ty;
-  int64_t Size = Binding.Size;
+  int64_t Size = getSize();
   if (Size != 1)
     // unbounded arrays are represented as zero-sized arrays in LLVM IR
     ResTy = ArrayType::get(Ty, Size == ~0u ? 0 : Size);
@@ -672,6 +672,8 @@ GlobalVariable *ResourceInfo::createSymbol(Module &M, StructType *Ty) {
 
 MDTuple *ResourceInfo::getAsMetadata(Module &M,
                                      dxil::ResourceTypeInfo &RTI) const {
+  assert(!isFromHeap() && "Resource must not be from heap to get metadata");
+
   LLVMContext &Ctx = M.getContext();
   const DataLayout &DL = M.getDataLayout();
 
@@ -688,13 +690,13 @@ MDTuple *ResourceInfo::getAsMetadata(Module &M,
         Constant::getIntegerValue(I1Ty, APInt(1, V)));
   };
 
-  MDVals.push_back(getIntMD(Binding.RecordID));
+  MDVals.push_back(getIntMD(Binding->RecordID));
   assert(Symbol && "Cannot yet create useful resource metadata without symbol");
   MDVals.push_back(ValueAsMetadata::get(Symbol));
   MDVals.push_back(MDString::get(Ctx, Name));
-  MDVals.push_back(getIntMD(Binding.Space));
-  MDVals.push_back(getIntMD(Binding.LowerBound));
-  MDVals.push_back(getIntMD(Binding.Size == 0 ? ~0u : Binding.Size));
+  MDVals.push_back(getIntMD(Binding->Space));
+  MDVals.push_back(getIntMD(Binding->LowerBound));
+  MDVals.push_back(getIntMD(Binding->Size == 0 ? ~0u : Binding->Size));
 
   if (RTI.isCBuffer()) {
     MDVals.push_back(getIntMD(RTI.getCBufferSize(DL)));
@@ -799,11 +801,15 @@ void ResourceInfo::print(raw_ostream &OS, dxil::ResourceTypeInfo &RTI,
     OS << "\n";
   }
 
-  OS << "  Binding:\n"
-     << "    Record ID: " << Binding.RecordID << "\n"
-     << "    Space: " << Binding.Space << "\n"
-     << "    Lower Bound: " << Binding.LowerBound << "\n"
-     << "    Size: " << Binding.Size << "\n";
+  if (hasBinding()) {
+    OS << "  Binding:\n"
+       << "    Record ID: " << Binding->RecordID << "\n"
+       << "    Space: " << Binding->Space << "\n"
+       << "    Lower Bound: " << Binding->LowerBound << "\n"
+       << "    Size: " << Binding->Size << "\n";
+  } else {
+    OS << "  Binding: None\n";
+  }
 
   OS << "  Globally Coherent: " << GloballyCoherent << "\n";
   OS << "  Has Atomic64 Use: " << HasAtomic64Use << "\n";
@@ -897,6 +903,19 @@ void DXILResourceMap::populateResourceInfos(Module &M,
 
       break;
     }
+    case Intrinsic::dx_resource_handlefromheap: {
+      auto *HandleTy = cast<TargetExtType>(F.getReturnType());
+      ResourceTypeInfo &RTI = DRTM[HandleTy];
+
+      for (User *U : F.users())
+        if (CallInst *CI = dyn_cast<CallInst>(U)) {
+          LLVM_DEBUG(dbgs() << "  Visiting: " << *U << "\n");
+          ResourceInfo RI = ResourceInfo{HandleTy};
+          CIToInfos.emplace_back(CI, RI, RTI);
+        }
+
+      break;
+    }
     }
   }
 
@@ -940,7 +959,8 @@ void DXILResourceMap::populateResourceInfos(Module &M,
     FirstUAV = std::min({FirstUAV, FirstCBuffer});
 
     // Adjust the resource binding to use the next ID.
-    RI.setBindingID(NextID++);
+    if (!RI.isFromHeap())
+      RI.setBindingID(NextID++);
   }
 }
 

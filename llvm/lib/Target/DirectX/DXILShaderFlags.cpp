@@ -237,6 +237,16 @@ void ModuleShaderFlags::updateFunctionFlags(ComputedShaderFlags &CSF,
       }
       break;
     }
+    case Intrinsic::dx_resource_handlefromheap: {
+      if (auto *ConstInt = dyn_cast<ConstantInt>(II->getArgOperand(1))) {
+        bool IsSamplerHeap = ConstInt->getValue().getBoolValue();
+        if (IsSamplerHeap)
+          CSF.SamplerDescriptorHeapIndexing = true;
+        else
+          CSF.ResourceDescriptorHeapIndexing = true;
+      }
+      break;
+    }
     case Intrinsic::dx_resource_load_typedbuffer: {
       dxil::ResourceTypeInfo &RTI =
           DRTM[cast<TargetExtType>(II->getArgOperand(0)->getType())];
@@ -284,7 +294,7 @@ ModuleShaderFlags::gatherGlobalModuleFlags(const Module &M,
     if (MMDI.ValidatorVersion < VersionTuple(1, 6)) {
       NumUAVs++;
     } else { // MMDI.ValidatorVersion >= VersionTuple(1, 6)
-      uint32_t Size = UAV.getBinding().Size;
+      uint32_t Size = UAV.getSize();
       uint32_t NewNum = NumUAVs + (Size == 0 ? ~0U : Size);
       if (NewNum < NumUAVs)
         NewNum = ~0U;
@@ -316,6 +326,20 @@ ModuleShaderFlags::gatherGlobalModuleFlags(const Module &M,
           M.getModuleFlag("dx.allresourcesbound")))
     if (AllResourcesBound->getValue().getBoolValue())
       CSF.AllResourcesBound = true;
+
+  // Set flags for directly indexed resources from heap
+  // for (auto &RI : DRM.srv_uav_cbuffers()) {
+  //   if (RI.isFromHeap()) {
+  //     CSF.ResourceDescriptorHeapIndexing = true;
+  //     break;
+  //   }
+  // }
+  // for (auto &RI : DRM.samplers()) {
+  //   if (RI.isFromHeap()) {
+  //     CSF.SamplerDescriptorHeapIndexing = true;
+  //     break;
+  //   }
+  // }
 
   return CSF;
 }
