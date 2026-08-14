@@ -1223,8 +1223,10 @@ BuiltinTypeDeclBuilder::addHeapResourceInfoConstructor(bool HasCounter) {
       .assign(PH::Handle, PH::LastStmt);
 
   if (HasCounter) {
-    MB.callBuiltin("__builtin_hlsl_resource_counterhandlefromheap", HandleType,
-                   PH::Handle, MB.createMemberExpr(PH::_0, IndexField))
+    QualType CounterHandleType = getResourceCounterHandleField()->getType();
+    MB.callBuiltin("__builtin_hlsl_resource_counterhandlefromheap",
+                   CounterHandleType, PH::Handle,
+                   MB.createMemberExpr(PH::_0, IndexField))
         .assign(PH::CounterHandle, PH::LastStmt);
   }
 

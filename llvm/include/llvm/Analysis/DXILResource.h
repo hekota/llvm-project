@@ -372,14 +372,14 @@ enum class ResourceCounterDirection {
 class ResourceInfo {
 public:
   struct ResourceBinding {
-    uint32_t RecordID;
+    uint32_t BindingID;
     uint32_t Space;
     uint32_t LowerBound;
     uint32_t Size;
 
     bool operator==(const ResourceBinding &RHS) const {
-      return std::tie(RecordID, Space, LowerBound, Size) ==
-             std::tie(RHS.RecordID, RHS.Space, RHS.LowerBound, RHS.Size);
+      return std::tie(BindingID, Space, LowerBound, Size) ==
+             std::tie(RHS.BindingID, RHS.Space, RHS.LowerBound, RHS.Size);
     }
     bool operator!=(const ResourceBinding &RHS) const {
       return !(*this == RHS);
@@ -389,8 +389,8 @@ public:
       // guarantees a well ordered results.
       const bool LHSIsUnbounded = Size == 0;
       const bool RHSIsUnbounded = RHS.Size == 0;
-      return std::tie(RecordID, Space, LowerBound, LHSIsUnbounded, Size) <
-             std::tie(RHS.RecordID, RHS.Space, RHS.LowerBound, RHSIsUnbounded,
+      return std::tie(BindingID, Space, LowerBound, LHSIsUnbounded, Size) <
+             std::tie(RHS.BindingID, RHS.Space, RHS.LowerBound, RHSIsUnbounded,
                       RHS.Size);
     }
     bool overlapsWith(const ResourceBinding &RHS) const {
@@ -404,6 +404,7 @@ public:
 
 private:
   std::optional<ResourceBinding> Binding;
+  uint32_t HeapResourceID = -1U;
   TargetExtType *HandleTy;
   StringRef Name;
   GlobalVariable *Symbol = nullptr;
@@ -413,20 +414,21 @@ public:
   ResourceCounterDirection CounterDirection = ResourceCounterDirection::Unknown;
   bool HasAtomic64Use = false;
 
-  ResourceInfo(uint32_t RecordID, uint32_t Space, uint32_t LowerBound,
-               uint32_t Size, TargetExtType *HandleTy, StringRef Name = "",
+  ResourceInfo(uint32_t Space, uint32_t LowerBound, uint32_t Size,
+               TargetExtType *HandleTy, StringRef Name = "",
                GlobalVariable *Symbol = nullptr)
-      : Binding{ResourceBinding{RecordID, Space, LowerBound, Size}},
+      : Binding{ResourceBinding{0, Space, LowerBound, Size}},
         HandleTy(HandleTy), Name(Name), Symbol(Symbol) {}
 
-  ResourceInfo(TargetExtType *HandleTy)
-      : Binding{std::nullopt}, HandleTy(HandleTy), Name(""), Symbol(nullptr) {}
+  ResourceInfo(uint32_t HeapResourceID, TargetExtType *HandleTy)
+      : Binding{std::nullopt}, HeapResourceID(HeapResourceID),
+        HandleTy(HandleTy), Name(""), Symbol(nullptr) {}
 
   bool isFromHeap() const { return !hasBinding(); }
   bool hasBinding() const { return Binding.has_value(); }
   void setBindingID(unsigned ID) {
     assert(hasBinding() && "Resource does not have a binding");
-    Binding->RecordID = ID;
+    Binding->BindingID = ID;
   }
 
   bool hasCounter() const {
@@ -451,8 +453,9 @@ public:
   getAnnotateProps(Module &M, dxil::ResourceTypeInfo &RTI) const;
 
   bool operator==(const ResourceInfo &RHS) const {
-    return std::tie(Binding, HandleTy, Symbol, Name) ==
-           std::tie(RHS.Binding, RHS.HandleTy, RHS.Symbol, RHS.Name);
+    return std::tie(Binding, HeapResourceID, HandleTy, Symbol, Name) ==
+           std::tie(RHS.Binding, RHS.HeapResourceID, HandleTy, RHS.Symbol,
+                    RHS.Name);
   }
   bool operator!=(const ResourceInfo &RHS) const { return !(*this == RHS); }
   bool operator<(const ResourceInfo &RHS) const {

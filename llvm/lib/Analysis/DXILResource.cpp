@@ -690,7 +690,7 @@ MDTuple *ResourceInfo::getAsMetadata(Module &M,
         Constant::getIntegerValue(I1Ty, APInt(1, V)));
   };
 
-  MDVals.push_back(getIntMD(Binding->RecordID));
+  MDVals.push_back(getIntMD(Binding->BindingID));
   assert(Symbol && "Cannot yet create useful resource metadata without symbol");
   MDVals.push_back(ValueAsMetadata::get(Symbol));
   MDVals.push_back(MDString::get(Ctx, Name));
@@ -803,7 +803,7 @@ void ResourceInfo::print(raw_ostream &OS, dxil::ResourceTypeInfo &RTI,
 
   if (hasBinding()) {
     OS << "  Binding:\n"
-       << "    Record ID: " << Binding->RecordID << "\n"
+       << "    Binding ID: " << Binding->BindingID << "\n"
        << "    Space: " << Binding->Space << "\n"
        << "    Lower Bound: " << Binding->LowerBound << "\n"
        << "    Size: " << Binding->Size << "\n";
@@ -871,6 +871,12 @@ void DXILResourceMap::populateResourceInfos(Module &M,
                                             DXILResourceTypeMap &DRTM) {
   SmallVector<std::tuple<CallInst *, ResourceInfo, ResourceTypeInfo>> CIToInfos;
 
+  // We needs to assign a unique ID to each resource that is created
+  // from a heap. The ID must be unique for each unique Index value so
+  // we can differentiate between resources instances of the same type.
+  DenseMap<Value *, uint32_t> IndexToHeapResID;
+  uint32_t NextHeapResID = 0;
+
   for (Function &F : M.functions()) {
     if (!F.isDeclaration())
       continue;
@@ -895,8 +901,7 @@ void DXILResourceMap::populateResourceInfos(Module &M,
           StringRef Name = getResourceNameFromBindingCall(CI);
 
           ResourceInfo RI =
-              ResourceInfo{/*RecordID=*/0, Space,    LowerBound,
-                           Size,           HandleTy, Name};
+              ResourceInfo{Space, LowerBound, Size, HandleTy, Name};
 
           CIToInfos.emplace_back(CI, RI, RTI);
         }
@@ -907,13 +912,22 @@ void DXILResourceMap::populateResourceInfos(Module &M,
       auto *HandleTy = cast<TargetExtType>(F.getReturnType());
       ResourceTypeInfo &RTI = DRTM[HandleTy];
 
-      for (User *U : F.users())
+      for (User *U : F.users()) {
         if (CallInst *CI = dyn_cast<CallInst>(U)) {
           LLVM_DEBUG(dbgs() << "  Visiting: " << *U << "\n");
-          ResourceInfo RI = ResourceInfo{HandleTy};
+          Value *Index = CI->getArgOperand(0);
+          uint32_t HeapResID;
+          auto Pos = IndexToHeapResID.find(Index);
+          if (Pos == IndexToHeapResID.end()) {
+            HeapResID = NextHeapResID++;
+            IndexToHeapResID[Index] = HeapResID;
+          } else {
+            HeapResID = Pos->second;
+          }
+          ResourceInfo RI = ResourceInfo{HeapResID, HandleTy};
           CIToInfos.emplace_back(CI, RI, RTI);
         }
-
+      }
       break;
     }
     }
@@ -936,7 +950,8 @@ void DXILResourceMap::populateResourceInfos(Module &M,
   }
 
   unsigned Size = Infos.size();
-  // In DXC, Record ID is unique per resource type. Match that.
+  // In DXC, Binding ID is unique per resource type. Match that.
+  // Dynamic resources do not need record ID.
   FirstUAV = FirstCBuffer = FirstSampler = Size;
   uint32_t NextID = 0;
   for (unsigned I = 0, E = Size; I != E; ++I) {
@@ -959,7 +974,7 @@ void DXILResourceMap::populateResourceInfos(Module &M,
     FirstUAV = std::min({FirstUAV, FirstCBuffer});
 
     // Adjust the resource binding to use the next ID.
-    if (!RI.isFromHeap())
+    if (RI.hasBinding())
       RI.setBindingID(NextID++);
   }
 }
@@ -1067,9 +1082,11 @@ SmallVector<dxil::ResourceInfo *> DXILResourceMap::findByUse(const Value *Key) {
 
   switch (CI->getIntrinsicID()) {
   // Found the create, return the binding
-  case Intrinsic::dx_resource_handlefrombinding: {
+  case Intrinsic::dx_resource_handlefrombinding:
+  case Intrinsic::dx_resource_handlefromheap: {
     auto Pos = CallMap.find(CI);
-    assert(Pos != CallMap.end() && "HandleFromBinding must be in resource map");
+    assert(Pos != CallMap.end() &&
+           "handle initialization call must be in resource map");
     return {&Infos[Pos->second]};
   }
   default:

@@ -1,4 +1,4 @@
-//===----- hlsl_intrinsics.h - HLSL definitions for intrinsics ----------===//
+//===----- hlsl_resources.h - HLSL definitions for resources ----------===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -14,8 +14,7 @@ namespace hlsl {
 #define _HLSL_AVAILABILITY(platform, version)                                  \
   __attribute__((availability(platform, introduced = version)))
 
-template <bool IsSamplerHeap>
-struct _HLSL_AVAILABILITY(shadermodel, 6.6) DescriptorHeapStruct {
+template <bool IsSamplerHeap> struct DescriptorHeapStruct {
   __hlsl_heap_resource_info operator[](uint32_t Index) {
     return __hlsl_heap_resource_info{Index, IsSamplerHeap};
   }
