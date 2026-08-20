@@ -446,7 +446,7 @@ public:
       dxil::ResourceTypeInfo &RTI = DRTM[RI.getHandleTy()];
 
       Value *IndexOp = CI->getArgOperand(0);
-      Value *IsSamplerHeap = CI->getArgOperand(1);
+      Value *IsSamplerHeap = ConstantInt::get(Int1Ty, RTI.isSampler());
 
       std::pair<uint32_t, uint32_t> Props =
           RI.getAnnotateProps(*F.getParent(), RTI);

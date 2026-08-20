@@ -93,7 +93,9 @@ public:
   BuiltinTypeDeclBuilder &addDefaultHandleConstructor(
       AccessSpecifier Access = AccessSpecifier::AS_public);
   BuiltinTypeDeclBuilder &
-  addCopyConstructor(AccessSpecifier Access = AccessSpecifier::AS_public);
+  addHeapResourceInfoConstructor(bool HasCounter = false);
+  BuiltinTypeDeclBuilder &addHeapSamplerInfoConstructor();
+  BuiltinTypeDeclBuilder &addCopyConstructor(AccessSpecifier Access = AccessSpecifier::AS_public);
   BuiltinTypeDeclBuilder &addCopyAssignmentOperator(
       AccessSpecifier Access = AccessSpecifier::AS_public);
 

@@ -15,7 +15,7 @@ define void @test_typedbuffer() {
   ; Buffer<uint4> Buf2 = ResourceDescriptorHeap[ID.x + 1];
   %add0 = add i32 %idx, 1
   %srv0 = tail call target("dx.TypedBuffer", <4 x i32>, 0, 0, 0)
-      @llvm.dx.resource.handlefromheap.tdx.TypedBuffer_v4i32_0_0_0t(i32 %add0, i1 false)
+      @llvm.dx.resource.handlefromheap.tdx.TypedBuffer_v4i32_0_0_0t(i32 %add0)
 ; CHECK: Resource [[SRV0:0]]:
 ; CHECK-NEXT:   HeapIndexID: {{[0-9]+}}
 ; CHECK-NEXT:   Globally Coherent: 0
@@ -28,7 +28,7 @@ define void @test_typedbuffer() {
 
   ; ByteAddressBuffer Buf0 = ResourceDescriptorHeap[5];
   %srv1 = tail call target("dx.RawBuffer", i8, 0, 0)
-      @llvm.dx.resource.handlefromheap.tdx.RawBuffer_i8_0_0t(i32 5, i1 false)
+      @llvm.dx.resource.handlefromheap.tdx.RawBuffer_i8_0_0t(i32 5)
 ; CHECK: Resource [[SRV1:1]]:
 ; CHECK-NEXT:   HeapIndexID: {{[0-9]+}}
 ; CHECK-NEXT:   Globally Coherent: 0
@@ -40,7 +40,7 @@ define void @test_typedbuffer() {
   ; struct S { float4 a; uint4 b; };
   ; StructuredBuffer<S> Buf1 = ResourceDescriptorHeap[ID.x];
   %srv2 = tail call target("dx.RawBuffer", %struct.S, 0, 0)
-      @llvm.dx.resource.handlefromheap.tdx.RawBuffer_s_struct.Ss_0_0t(i32 %idx, i1 false)
+      @llvm.dx.resource.handlefromheap.tdx.RawBuffer_s_struct.Ss_0_0t(i32 %idx)
 ; CHECK-DAG: Resource [[SRV2:2]]:
 ; CHECK: HeapIndexID: {{[0-9]+}}
 ; CHECK-NEXT:   Globally Coherent: 0
@@ -57,7 +57,7 @@ define void @test_typedbuffer() {
   ; RWBuffer<int> Buf3 = ResourceDescriptorHeap[ID.x + 2];
   %add2 = add i32 %idx, 2
   %uav0 = tail call target("dx.TypedBuffer", i32, 1, 0, 1)
-      @llvm.dx.resource.handlefromheap.tdx.TypedBuffer_i32_1_0_1t(i32 %add2, i1 false)
+      @llvm.dx.resource.handlefromheap.tdx.TypedBuffer_i32_1_0_1t(i32 %add2)
 ; CHECK: Resource [[UAV0:3]]:
 ; CHECK-NEXT:   HeapIndexID: 7
 ; CHECK-NEXT:   Globally Coherent: 0
@@ -72,7 +72,7 @@ define void @test_typedbuffer() {
   ; RWStructuredBuffer<double> Buf6 = ResourceDescriptorHeap[ID.x + 5];
   %add5 = add i32 %idx, 5
   %uav3 = tail call target("dx.RawBuffer", double, 1, 0)
-      @llvm.dx.resource.handlefromheap.tdx.RawBuffer_f64_1_0t(i32 %add5, i1 false)
+      @llvm.dx.resource.handlefromheap.tdx.RawBuffer_f64_1_0t(i32 %add5)
 ; CHECK: Resource [[UAV1:4]]:
 ; CHECK-NEXT:   HeapIndexID: 2
 ; CHECK-NEXT:   Globally Coherent: 0
@@ -88,7 +88,7 @@ define void @test_typedbuffer() {
   ; Buf4.DecrementCounter();
   %add3 = add i32 %idx, 3
   %uav1 = tail call target("dx.RawBuffer", <4 x float>, 1, 0)
-      @llvm.dx.resource.handlefromheap.tdx.RawBuffer_v4f32_1_0t(i32 %add3, i1 false)
+      @llvm.dx.resource.handlefromheap.tdx.RawBuffer_v4f32_1_0t(i32 %add3)
   %count0 = tail call noundef i32 @llvm.dx.resource.updatecounter.tdx.RawBuffer_v4f32_1_0t(target("dx.RawBuffer", <4 x float>, 1, 0) %uav1, i8 -1)
 ; CHECK: Resource [[UAV2:5]]:
 ; CHECK-NEXT:   HeapIndexID: 5
@@ -106,7 +106,7 @@ define void @test_typedbuffer() {
   ; Buf5.IncrementCounter();
   %add4 = add i32 %idx, 4
   %uav2 = tail call target("dx.RawBuffer", <4 x float>, 1, 0)
-      @llvm.dx.resource.handlefromheap.tdx.RawBuffer_v4f32_1_0t(i32 %add4, i1 false)
+      @llvm.dx.resource.handlefromheap.tdx.RawBuffer_v4f32_1_0t(i32 %add4)
   %14 = tail call noundef i32 @llvm.dx.resource.updatecounter.tdx.RawBuffer_v4f32_1_0t(target("dx.RawBuffer", <4 x float>, 1, 0) %uav2, i8 -1)
   %15 = tail call noundef i32 @llvm.dx.resource.updatecounter.tdx.RawBuffer_v4f32_1_0t(target("dx.RawBuffer", <4 x float>, 1, 0) %uav2, i8 1)
 ; CHECK: Resource [[UAV3:6]]:
@@ -127,7 +127,7 @@ define void @test_typedbuffer() {
   ; ConstantBuffer<P> CB1 = ResourceDescriptorHeap[ID.x + 6];
   %add6 = add i32 %idx, 6
   %cbv0 = tail call target("dx.CBuffer", %P)
-      @llvm.dx.resource.handlefromheap.tdx.CBuffer_s_Pst(i32 %add6, i1 false)
+      @llvm.dx.resource.handlefromheap.tdx.CBuffer_s_Pst(i32 %add6)
 ; CHECK: Resource [[CVB0:7]]:
 ; CHECK-NEXT:   HeapIndexID: 0
 ; CHECK-NEXT:   Globally Coherent: 0
@@ -141,7 +141,7 @@ define void @test_typedbuffer() {
   ; ConstantBuffer<Q> CB2 = ResourceDescriptorHeap[ID.x + 7];
   %add7 = add i32 %idx, 7
   %cvb1 = tail call target("dx.CBuffer", %Q)
-      @llvm.dx.resource.handlefromheap.tdx.CBuffer_s_Qst(i32 %add7, i1 false)
+      @llvm.dx.resource.handlefromheap.tdx.CBuffer_s_Qst(i32 %add7)
 ; CHECK: Resource [[CVB1:8]]:
 ; CHECK-NEXT:   HeapIndexID: 1
 ; CHECK-NEXT:   Globally Coherent: 0
@@ -156,19 +156,19 @@ define void @test_typedbuffer() {
 ; Duplicated resources should not be added to the list
 ; (created from heap with the same index).
   %srv2_dupl = tail call target("dx.RawBuffer", %struct.S, 0, 0)
-      @llvm.dx.resource.handlefromheap.tdx.RawBuffer_s_struct.Ss_0_0t(i32 %idx, i1 false)
+      @llvm.dx.resource.handlefromheap.tdx.RawBuffer_s_struct.Ss_0_0t(i32 %idx)
   %cvb1_dupl = tail call target("dx.CBuffer", %Q)
-      @llvm.dx.resource.handlefromheap.tdx.CBuffer_s_Qst(i32 %add7, i1 false)
+      @llvm.dx.resource.handlefromheap.tdx.CBuffer_s_Qst(i32 %add7)
 
   ret void
 }
 
-; CHECK-DAG: Call bound to [[SRV0]]:  %srv0 = tail call target("dx.TypedBuffer", <4 x i32>, 0, 0, 0) @llvm.dx.resource.handlefromheap.tdx.TypedBuffer_v4i32_0_0_0t(i32 %add0, i1 false)
-; CHECK-DAG: Call bound to [[SRV1]]:  %srv1 = tail call target("dx.RawBuffer", i8, 0, 0) @llvm.dx.resource.handlefromheap.tdx.RawBuffer_i8_0_0t(i32 5, i1 false)
-; CHECK-DAG: Call bound to [[SRV2]]:  %srv2 = tail call target("dx.RawBuffer", %struct.S, 0, 0) @llvm.dx.resource.handlefromheap.tdx.RawBuffer_s_struct.Ss_0_0t(i32 %idx, i1 false)
-; CHECK-DAG: Call bound to [[UAV0]]:  %uav0 = tail call target("dx.TypedBuffer", i32, 1, 0, 1) @llvm.dx.resource.handlefromheap.tdx.TypedBuffer_i32_1_0_1t(i32 %add2, i1 false)
-; CHECK-DAG: Call bound to [[UAV1]]:  %uav3 = tail call target("dx.RawBuffer", double, 1, 0) @llvm.dx.resource.handlefromheap.tdx.RawBuffer_f64_1_0t(i32 %add5, i1 false)
-; CHECK-DAG: Call bound to [[UAV2]]:  %uav1 = tail call target("dx.RawBuffer", <4 x float>, 1, 0) @llvm.dx.resource.handlefromheap.tdx.RawBuffer_v4f32_1_0t(i32 %add3, i1 false)
-; CHECK-DAG: Call bound to [[UAV3]]:  %uav2 = tail call target("dx.RawBuffer", <4 x float>, 1, 0) @llvm.dx.resource.handlefromheap.tdx.RawBuffer_v4f32_1_0t(i32 %add4, i1 false)
-; CHECK-DAG: Call bound to [[CVB0]]:  %cbv0 = tail call target("dx.CBuffer", %P) @llvm.dx.resource.handlefromheap.tdx.CBuffer_s_Pst(i32 %add6, i1 false)
-; CHECK-DAG: Call bound to [[CVB1]]:  %cvb1 = tail call target("dx.CBuffer", %Q) @llvm.dx.resource.handlefromheap.tdx.CBuffer_s_Qst(i32 %add7, i1 false)
+; CHECK-DAG: Call bound to [[SRV0]]:  %srv0 = tail call target("dx.TypedBuffer", <4 x i32>, 0, 0, 0) @llvm.dx.resource.handlefromheap.tdx.TypedBuffer_v4i32_0_0_0t(i32 %add0)
+; CHECK-DAG: Call bound to [[SRV1]]:  %srv1 = tail call target("dx.RawBuffer", i8, 0, 0) @llvm.dx.resource.handlefromheap.tdx.RawBuffer_i8_0_0t(i32 5)
+; CHECK-DAG: Call bound to [[SRV2]]:  %srv2 = tail call target("dx.RawBuffer", %struct.S, 0, 0) @llvm.dx.resource.handlefromheap.tdx.RawBuffer_s_struct.Ss_0_0t(i32 %idx)
+; CHECK-DAG: Call bound to [[UAV0]]:  %uav0 = tail call target("dx.TypedBuffer", i32, 1, 0, 1) @llvm.dx.resource.handlefromheap.tdx.TypedBuffer_i32_1_0_1t(i32 %add2)
+; CHECK-DAG: Call bound to [[UAV1]]:  %uav3 = tail call target("dx.RawBuffer", double, 1, 0) @llvm.dx.resource.handlefromheap.tdx.RawBuffer_f64_1_0t(i32 %add5)
+; CHECK-DAG: Call bound to [[UAV2]]:  %uav1 = tail call target("dx.RawBuffer", <4 x float>, 1, 0) @llvm.dx.resource.handlefromheap.tdx.RawBuffer_v4f32_1_0t(i32 %add3)
+; CHECK-DAG: Call bound to [[UAV3]]:  %uav2 = tail call target("dx.RawBuffer", <4 x float>, 1, 0) @llvm.dx.resource.handlefromheap.tdx.RawBuffer_v4f32_1_0t(i32 %add4)
+; CHECK-DAG: Call bound to [[CVB0]]:  %cbv0 = tail call target("dx.CBuffer", %P) @llvm.dx.resource.handlefromheap.tdx.CBuffer_s_Pst(i32 %add6)
+; CHECK-DAG: Call bound to [[CVB1]]:  %cvb1 = tail call target("dx.CBuffer", %Q) @llvm.dx.resource.handlefromheap.tdx.CBuffer_s_Qst(i32 %add7)
